@@ -15,6 +15,10 @@
 		2DA57408264992F60086820F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 2DA57406264992F60086820F /* LaunchScreen.storyboard */; };
 		2DA57413264992F60086820F /* MetalAndImagesTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA57412264992F60086820F /* MetalAndImagesTests.swift */; };
 		2DA5741E264992F70086820F /* MetalAndImagesUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA5741D264992F70086820F /* MetalAndImagesUITests.swift */; };
+		2DA574302649968A0086820F /* CustomCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA5742E2649968A0086820F /* CustomCell.swift */; };
+		2DA574312649968A0086820F /* CustomCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2DA5742F2649968A0086820F /* CustomCell.xib */; };
+		2DA574372649B6400086820F /* Filter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA574362649B6400086820F /* Filter.swift */; };
+		2DA5743C2649C1BA0086820F /* MetalController.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2DA5743B2649C1BA0086820F /* MetalController.metal */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +53,10 @@
 		2DA57419264992F60086820F /* MetalAndImagesUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MetalAndImagesUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		2DA5741D264992F70086820F /* MetalAndImagesUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetalAndImagesUITests.swift; sourceTree = "<group>"; };
 		2DA5741F264992F70086820F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		2DA5742E2649968A0086820F /* CustomCell.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCell.swift; sourceTree = "<group>"; };
+		2DA5742F2649968A0086820F /* CustomCell.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = CustomCell.xib; sourceTree = "<group>"; };
+		2DA574362649B6400086820F /* Filter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Filter.swift; sourceTree = "<group>"; };
+		2DA5743B2649C1BA0086820F /* MetalController.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = MetalController.metal; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +107,7 @@
 		2DA573FA264992F60086820F /* MetalAndImages */ = {
 			isa = PBXGroup;
 			children = (
+				2DA574352649B62F0086820F /* MetalFiles */,
 				2DA573FB264992F60086820F /* AppDelegate.swift */,
 				2DA573FD264992F60086820F /* SceneDelegate.swift */,
 				2DA573FF264992F60086820F /* ViewController.swift */,
@@ -106,6 +115,8 @@
 				2DA57404264992F60086820F /* Assets.xcassets */,
 				2DA57406264992F60086820F /* LaunchScreen.storyboard */,
 				2DA57409264992F60086820F /* Info.plist */,
+				2DA5742E2649968A0086820F /* CustomCell.swift */,
+				2DA5742F2649968A0086820F /* CustomCell.xib */,
 			);
 			path = MetalAndImages;
 			sourceTree = "<group>";
@@ -126,6 +137,15 @@
 				2DA5741F264992F70086820F /* Info.plist */,
 			);
 			path = MetalAndImagesUITests;
+			sourceTree = "<group>";
+		};
+		2DA574352649B62F0086820F /* MetalFiles */ = {
+			isa = PBXGroup;
+			children = (
+				2DA574362649B6400086820F /* Filter.swift */,
+				2DA5743B2649C1BA0086820F /* MetalController.metal */,
+			);
+			path = MetalFiles;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -233,6 +253,7 @@
 			files = (
 				2DA57408264992F60086820F /* LaunchScreen.storyboard in Resources */,
 				2DA57405264992F60086820F /* Assets.xcassets in Resources */,
+				2DA574312649968A0086820F /* CustomCell.xib in Resources */,
 				2DA57403264992F60086820F /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -259,8 +280,11 @@
 			buildActionMask = 2147483647;
 			files = (
 				2DA57400264992F60086820F /* ViewController.swift in Sources */,
+				2DA574372649B6400086820F /* Filter.swift in Sources */,
 				2DA573FC264992F60086820F /* AppDelegate.swift in Sources */,
+				2DA574302649968A0086820F /* CustomCell.swift in Sources */,
 				2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */,
+				2DA5743C2649C1BA0086820F /* MetalController.metal in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -366,7 +390,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -421,7 +445,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 14.4;
+				IPHONEOS_DEPLOYMENT_TARGET = 14.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
