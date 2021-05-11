@@ -26,6 +26,7 @@ class Filter {
     // most devices have a limit of 512 threads per group
     let threadsPerBlock = MTLSize(width: 1, height: 1, depth: 1)
     
+    
     init(img: UIImage){
         self.inputImage = img
         self.height = Int(self.inputImage.size.height)
