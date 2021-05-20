@@ -20,7 +20,8 @@ class ViewController: UIViewController {
     var imgArr: [ImgDetails] = [ImgDetails(img: UIImage(named: "img1"), description: "252 × 200 JPEG"),
                                 ImgDetails(img: UIImage(named: "img2"), description: "165 × 305 PNG"),
                                 ImgDetails(img: UIImage(named: "img3"), description: "200 × 200 PNG"),
-                                ImgDetails(img: UIImage(named: "img4"), description: "512 × 509 PNG")]
+                                ImgDetails(img: UIImage(named: "img4"), description: "512 × 509 PNG"),
+                                ImgDetails(img: UIImage(named: "img5"), description: "293 x 172 PNG")]
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -58,9 +59,15 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-        let filter = Filter(img: imgArr[indexPath.row].img ?? UIImage())
-        let resultImage = filter.applyFilter()
-        mainImageView.image = resultImage
+//        let filter = Filter(img: imgArr[indexPath.row].img ?? UIImage())
+//        let resultImage = filter.applyFilter()
+//        mainImageView.image = resultImage
+        
+        mainImageView.image = ImageParsing.parseImage(inputImage: imgArr[indexPath.row].img ?? UIImage())
+        
+//        let rgbaImg = RGBA(image: imgArr[indexPath.row].img)
+//        mainImageView.image = rgbaImg?.toUIImage()
+        
     }
 }
 

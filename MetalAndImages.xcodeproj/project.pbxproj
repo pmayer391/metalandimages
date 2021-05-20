@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91B0E6264CD7B1003141CF /* ParseImage.swift */; };
 		2DA573FC264992F60086820F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA573FB264992F60086820F /* AppDelegate.swift */; };
 		2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA573FD264992F60086820F /* SceneDelegate.swift */; };
 		2DA57400264992F60086820F /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA573FF264992F60086820F /* ViewController.swift */; };
@@ -39,6 +40,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2D91B0E6264CD7B1003141CF /* ParseImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseImage.swift; sourceTree = "<group>"; };
 		2DA573F8264992F60086820F /* MetalAndImages.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetalAndImages.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2DA573FB264992F60086820F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		2DA573FD264992F60086820F /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
@@ -144,6 +146,7 @@
 			children = (
 				2DA574362649B6400086820F /* Filter.swift */,
 				2DA5743B2649C1BA0086820F /* MetalController.metal */,
+				2D91B0E6264CD7B1003141CF /* ParseImage.swift */,
 			);
 			path = MetalFiles;
 			sourceTree = "<group>";
@@ -281,6 +284,7 @@
 			files = (
 				2DA57400264992F60086820F /* ViewController.swift in Sources */,
 				2DA574372649B6400086820F /* Filter.swift in Sources */,
+				2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */,
 				2DA573FC264992F60086820F /* AppDelegate.swift in Sources */,
 				2DA574302649968A0086820F /* CustomCell.swift in Sources */,
 				2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */,
