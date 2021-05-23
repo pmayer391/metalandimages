@@ -25,7 +25,8 @@ class ImageParsing{
         
         guard let cgImage = inputImage.cgImage,
               let data = cgImage.dataProvider?.data,
-              let bytes = CFDataGetBytePtr(data) else {
+              let bytes = CFDataGetBytePtr(data)
+        else {
             debugPrint("Couldn't access cgImage data")
             return nil
         }
@@ -42,10 +43,10 @@ class ImageParsing{
                     let a = bytes[offset + 3]
                     
                     //TODO: Need to figure out how alpha works and should be handled
-                    if r >= 245 && g >= 245 && b >= 245{
-                        modifiedImage[y][x] = 255
+                    if (r >= 245 && g >= 245 && b >= 245) || a < 255{
+                        modifiedImage[y][x] = UINT32_MAX
                     } else{
-                        modifiedImage[y][x] = 0
+                        modifiedImage[y][x] = 255
                     }
 //                    print("[x:\(x), y:\(y)] \(modifiedImage[y][x])")
 //
@@ -62,7 +63,7 @@ class ImageParsing{
             let bytesPerRow = width * bytesPerPixel2
             let imageData = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
             let colorSpace = CGColorSpaceCreateDeviceRGB()
-            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Big.rawValue
+            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
             bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
             
             guard let imageContext = CGContext(data: imageData,
@@ -80,7 +81,6 @@ class ImageParsing{
             }
             
             return imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
-            
         } else{
             debugPrint("Image is not in RGB Format")
         }
