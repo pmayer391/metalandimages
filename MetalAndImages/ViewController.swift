@@ -16,6 +16,7 @@ class ViewController: UIViewController {
 
     @IBOutlet weak var imgCollectionView: UICollectionView!
     @IBOutlet weak var mainImageView: UIImageView!
+    @IBOutlet weak var imgScrollView: UIScrollView!
     
     var imgArr: [ImgDetails] = [ImgDetails(img: UIImage(named: "img1"), description: "252 × 200 JPEG"),
                                 ImgDetails(img: UIImage(named: "img2"), description: "165 × 305 PNG"),
@@ -28,6 +29,9 @@ class ViewController: UIViewController {
         imgCollectionView.delegate = self
         imgCollectionView.dataSource = self
         imgCollectionView.register(UINib(nibName: "CustomCell", bundle: nil), forCellWithReuseIdentifier: "CustomCell")
+        imgScrollView.delegate = self
+        imgScrollView.minimumZoomScale = 1.0
+        imgScrollView.maximumZoomScale = 100.0
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -91,5 +95,12 @@ extension ViewController : UICollectionViewDelegateFlowLayout {
         return 0
     }
     
+}
+
+extension ViewController: UIScrollViewDelegate{
+    
+    func viewForZooming(in scrollView: UIScrollView) -> UIView? {
+        return mainImageView
+    }
 }
 

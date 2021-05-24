@@ -10,12 +10,6 @@ import UIKit
 import CoreGraphics
 import ImageIO
 
-//#define Mask8(x) ( (x) & 0xFF )
-//#define R(x) ( Mask8(x) )
-//#define G(x) ( Mask8(x >> 8 ) )
-//#define B(x) ( Mask8(x >> 16) )
-//#define A(x) ( Mask8(x >> 24) )
-//#define RGBAMake(r, g, b, a) ( Mask8(r) | Mask8(g) << 8 | Mask8(b) << 16 | Mask8(a) << 24 )
 //https://stackoverflow.com/questions/38229027/how-to-create-a-bitmap-image-from-the-byte-array-in-swift
 //https://stackoverflow.com/questions/36393436/convert-a-double-array-to-uiimage-in-swift
 
@@ -30,9 +24,9 @@ class ImageParsing{
             debugPrint("Couldn't access cgImage data")
             return nil
         }
-        
+        var modifiedImage = [[UInt32]](repeating: [UInt32](repeating: 0, count: cgImage.width), count: cgImage.height)
         if cgImage.colorSpace?.model == .rgb || cgImage.colorSpace?.model == .monochrome{
-            var modifiedImage = [[UInt32]](repeating: [UInt32](repeating: 0, count: cgImage.width), count: cgImage.height)
+
             let bytesPerPixel = cgImage.bitsPerPixel / cgImage.bitsPerComponent
             for y in 0 ..< cgImage.height {
                 for x in 0 ..< cgImage.width {
@@ -48,48 +42,170 @@ class ImageParsing{
                     } else{
                         modifiedImage[y][x] = 255
                     }
-//                    print("[x:\(x), y:\(y)] \(modifiedImage[y][x])")
-//
+
+
+                    print("[x:\(x), y:\(y)] \(modifiedImage[y][x])")
+
 //                    let components = (r: bytes[offset], g: bytes[offset + 1], b: bytes[offset + 2], a: bytes[offset + 3])
 //                    print("[x:\(x), y:\(y)] \(components)")
                 }
             }
             
-            let data = modifiedImage.flatMap({$0})
-            let width = Int(cgImage.width)
-            let height = Int(cgImage.height)
-            let bitsPerComponent = 8
-            let bytesPerPixel2 = 4
-            let bytesPerRow = width * bytesPerPixel2
-            let imageData = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
-            let colorSpace = CGColorSpaceCreateDeviceRGB()
-            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
-            bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
+//            let data = modifiedImage.flatMap({$0})
+//            let width = Int(cgImage.width)
+//            let height = Int(cgImage.height)
+//            let bitsPerComponent = 8
+//            let bytesPerPixel2 = 4
+//            let bytesPerRow = width * bytesPerPixel2
+//            let imageData = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
+//            let colorSpace = CGColorSpaceCreateDeviceRGB()
+//            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
+//            bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
+//
+//            guard let imageContext = CGContext(data: imageData,
+//                                               width: width,
+//                                               height: height,
+//                                               bitsPerComponent: bitsPerComponent,
+//                                               bytesPerRow: bytesPerRow,
+//                                               space: colorSpace,
+//                                               bitmapInfo: bitmapInfo),
+//                  let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: data.count)
+//            else { return nil }
+//
+//            for index in 0 ..< width * height {
+//                buffer[index] = data[index]
+//            }
+//            let returnImg = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
             
-            guard let imageContext = CGContext(data: imageData,
-                                               width: width,
-                                               height: height,
-                                               bitsPerComponent: bitsPerComponent,
-                                               bytesPerRow: bytesPerRow,
-                                               space: colorSpace,
-                                               bitmapInfo: bitmapInfo),
-                  let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: data.count)
-            else { return nil }
-            
-            for index in 0 ..< width * height {
-                buffer[index] = data[index]
-            }
-            
-            return imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
+//            return returnImg
         } else{
             debugPrint("Image is not in RGB Format")
         }
         
+        var newImgPixels = modifiedImage
         
+        for y in 0 ..< newImgPixels.count {
+            for x in 0 ..< newImgPixels[y].count{
+                if processPixel(arr: newImgPixels, x: x, y: y, xOffset: nil, yOffset: nil){
+                    //Check Left to Right Boundries
+                    if x > 0 && x < cgImage.width - 1{
+                        
+                        //Check for pixel intersection
+                        if y > 0 && y < cgImage.height - 1 {
+                            if processPixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: -1),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: -1),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: -1),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 0),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: 0),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 0),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 1),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: 1),
+                               processPixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 1){
+                                newImgPixels[y][x] = 1543488989
+                                continue
+                            }
+                        }
+                        
+                        //Check for top pixel
+                        if y > 0 && y < cgImage.height - 1 {
+                            if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: -1),
+                               processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: -1),
+                               processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: -1){
+                                newImgPixels[y][x] = 2345698934
+                                continue
+                            }
+                        }
+                        
+                        //Check for bottom pixel
+                        if y > 0 && y < cgImage.height - 1 {
+                            if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 1),
+                               processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: 1),
+                               processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 1){
+                                newImgPixels[y][x] = 1543488989
+                                continue
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        let data3 = newImgPixels.flatMap({$0})
+        let width = Int(cgImage.width)
+        let height = Int(cgImage.height)
+        let bitsPerComponent = 8
+        let bytesPerPixel2 = 4
+        let bytesPerRow = width * bytesPerPixel2
+        let imageData = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
+        bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
+
+        guard let imageContext = CGContext(data: imageData,
+                                           width: width,
+                                           height: height,
+                                           bitsPerComponent: bitsPerComponent,
+                                           bytesPerRow: bytesPerRow,
+                                           space: colorSpace,
+                                           bitmapInfo: bitmapInfo),
+              let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: data3.count)
+        else { return nil }
+
+        for index in 0 ..< width * height {
+            buffer[index] = data3[index]
+        }
+        let returnImg = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
+        
+        return returnImg
         
         return nil
     }
     
+}
+
+private extension ImageParsing{
+    
+    class func processPixel(bytes: UnsafePointer<UInt8>, offset: Int) -> Bool{
+        let rgbaTuple = getRGBAFromPixel(bytes: bytes, offset: offset)
+        return checkPixelForColor(r: rgbaTuple.0, g: rgbaTuple.1, b: rgbaTuple.2, a: rgbaTuple.3)
+    }
+    
+    class func processPixel(arr: [[UInt32]], x: Int, y: Int, xOffset: Int?, yOffset: Int?) -> Bool{
+//        let pixelUint32 = arr[y + (yOffset ?? 0)][x + (xOffset ?? 0)]
+//        let pixel = Pixel(value: pixelUint32)
+//        return checkPixelForColor(r: pixel.red, g: pixel.green, b: pixel.blue, a: pixel.alpha)
+        let postion = arr[y + (yOffset ?? 0)][x + (xOffset ?? 0)]
+        if postion == 255{
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    class func processWhitePixel(arr: [[UInt32]], x: Int, y: Int, xOffset: Int?, yOffset: Int?) -> Bool{
+        let postion = arr[y + (yOffset ?? 0)][x + (xOffset ?? 0)]
+        if postion == UInt32.max{
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    class func checkPixelForColor(r: UInt8, g: UInt8, b: UInt8, a: UInt8) -> Bool{
+        if (r >= 245 && g >= 245 && b >= 245) || a < 255{
+            return false //Pixel == White
+        } else{
+            return true //Pixel == Has Color
+        }
+    }
+    
+    class func getRGBAFromPixel(bytes: UnsafePointer<UInt8>, offset: Int) -> (UInt8, UInt8, UInt8, UInt8){
+        return (bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3])
+    }
+    
+    class func convert2DPixelArrToImg(){
+        
+    }
 }
 
 struct RGBA {

@@ -33,19 +33,34 @@
                             <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="qhp-4s-Hx0">
                                 <rect key="frame" x="20" y="334" width="374" height="508"/>
                                 <subviews>
-                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="XLA-By-Rqc">
-                                        <rect key="frame" x="87" y="154" width="200" height="200"/>
-                                        <color key="backgroundColor" red="0.83741801979999997" green="0.83743780850000005" blue="0.83742713930000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                    <view contentMode="scaleToFill" translatesAutoresizingMaskIntoConstraints="NO" id="R5B-h7-LYi">
+                                        <rect key="frame" x="67" y="20" width="240" height="240"/>
+                                        <subviews>
+                                            <scrollView clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="scaleToFill" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="McX-0q-git">
+                                                <rect key="frame" x="0.0" y="0.0" width="240" height="240"/>
+                                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                <subviews>
+                                                    <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" fixedFrame="YES" translatesAutoresizingMaskIntoConstraints="NO" id="XLA-By-Rqc">
+                                                        <rect key="frame" x="20" y="20" width="200" height="200"/>
+                                                        <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                                        <color key="backgroundColor" red="0.83741801979999997" green="0.83743780850000005" blue="0.83742713930000001" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                                                    </imageView>
+                                                </subviews>
+                                                <viewLayoutGuide key="contentLayoutGuide" id="bTw-mH-bQb"/>
+                                                <viewLayoutGuide key="frameLayoutGuide" id="5hO-gy-9mk"/>
+                                            </scrollView>
+                                        </subviews>
+                                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
                                         <constraints>
-                                            <constraint firstAttribute="height" constant="200" id="Ghc-Pv-v6h"/>
-                                            <constraint firstAttribute="width" constant="200" id="hPY-fz-Znt"/>
+                                            <constraint firstAttribute="height" constant="240" id="8yG-pk-a9W"/>
+                                            <constraint firstAttribute="width" constant="240" id="Ovf-bz-YAE"/>
                                         </constraints>
-                                    </imageView>
+                                    </view>
                                 </subviews>
                                 <color key="backgroundColor" red="0.4756349325" green="0.47564673419999998" blue="0.47564041610000002" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                 <constraints>
-                                    <constraint firstItem="XLA-By-Rqc" firstAttribute="centerX" secondItem="qhp-4s-Hx0" secondAttribute="centerX" id="Z78-4e-GaG"/>
-                                    <constraint firstItem="XLA-By-Rqc" firstAttribute="centerY" secondItem="qhp-4s-Hx0" secondAttribute="centerY" id="zDA-vu-Spw"/>
+                                    <constraint firstItem="R5B-h7-LYi" firstAttribute="top" secondItem="qhp-4s-Hx0" secondAttribute="top" constant="20" id="6bg-mu-vdC"/>
+                                    <constraint firstItem="R5B-h7-LYi" firstAttribute="centerX" secondItem="qhp-4s-Hx0" secondAttribute="centerX" id="6hX-hP-8Qy"/>
                                 </constraints>
                             </view>
                         </subviews>
@@ -63,6 +78,7 @@
                     </view>
                     <connections>
                         <outlet property="imgCollectionView" destination="A69-aF-ncS" id="UQp-2J-gqm"/>
+                        <outlet property="imgScrollView" destination="McX-0q-git" id="HhX-Qb-7Mn"/>
                         <outlet property="mainImageView" destination="XLA-By-Rqc" id="lfK-gP-JBg"/>
                     </connections>
                 </viewController>
@@ -72,6 +88,9 @@
         </scene>
     </scenes>
     <resources>
+        <systemColor name="systemBackgroundColor">
+            <color white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+        </systemColor>
         <systemColor name="systemPurpleColor">
             <color red="0.68627450980392157" green="0.32156862745098042" blue="0.87058823529411766" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
         </systemColor>
