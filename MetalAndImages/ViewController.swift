@@ -66,11 +66,13 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
 //        let filter = Filter(img: imgArr[indexPath.row].img ?? UIImage())
 //        let resultImage = filter.applyFilter()
 //        mainImageView.image = resultImage
-        
-        mainImageView.image = ImageParsing.parseImage(inputImage: imgArr[indexPath.row].img ?? UIImage())
+//        mainImageView.image = ParseImage.parseImage(inputImage: imgArr[indexPath.row].img ?? UIImage())
         
 //        let rgbaImg = RGBA(image: imgArr[indexPath.row].img)
 //        mainImageView.image = rgbaImg?.toUIImage()
+        
+        let imageParser = ParseImage()
+        mainImageView.image = imageParser.parseImage(inputImage: imgArr[indexPath.row].img)?.image
         
     }
 }
