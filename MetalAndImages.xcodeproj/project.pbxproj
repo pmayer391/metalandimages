@@ -22,6 +22,7 @@
 		2DA5743C2649C1BA0086820F /* MetalController.metal in Sources */ = {isa = PBXBuildFile; fileRef = 2DA5743B2649C1BA0086820F /* MetalController.metal */; };
 		2DCA488C265C615B002AD813 /* SignatureVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DCA488B265C615B002AD813 /* SignatureVC.swift */; };
 		2DCA4894265D2E71002AD813 /* SignitureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DCA4893265D2E71002AD813 /* SignitureView.swift */; };
+		2DE6262D26AA6DB00096EBC1 /* TestSignatureVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +64,7 @@
 		2DA5743B2649C1BA0086820F /* MetalController.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = MetalController.metal; sourceTree = "<group>"; };
 		2DCA488B265C615B002AD813 /* SignatureVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureVC.swift; sourceTree = "<group>"; };
 		2DCA4893265D2E71002AD813 /* SignitureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignitureView.swift; sourceTree = "<group>"; };
+		2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSignatureVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -125,6 +127,7 @@
 				2DA57404264992F60086820F /* Assets.xcassets */,
 				2DA57406264992F60086820F /* LaunchScreen.storyboard */,
 				2DA57409264992F60086820F /* Info.plist */,
+				2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */,
 			);
 			path = MetalAndImages;
 			sourceTree = "<group>";
@@ -289,6 +292,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2DA57400264992F60086820F /* ViewController.swift in Sources */,
+				2DE6262D26AA6DB00096EBC1 /* TestSignatureVC.swift in Sources */,
 				2DA574372649B6400086820F /* Filter.swift in Sources */,
 				2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */,
 				2DA573FC264992F60086820F /* AppDelegate.swift in Sources */,

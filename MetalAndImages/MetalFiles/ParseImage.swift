@@ -36,6 +36,7 @@ class ParseImage{
         }
         
         var modifiedImage = [[UInt32]](repeating: [UInt32](repeating: 0, count: cgImage.width), count: cgImage.height)
+        var pixelsImageMap: [String:ImagePixel] = [:]
         
         if cgImage.colorSpace?.model == .rgb || cgImage.colorSpace?.model == .monochrome{
             let bytesPerPixel = cgImage.bitsPerPixel / cgImage.bitsPerComponent
@@ -47,11 +48,26 @@ class ParseImage{
                     let b = bytes[offset + 2]
                     let a = bytes[offset + 3]
                     
-                    if (r >= 245 && g >= 245 && b >= 245) || a < 255{
-                        modifiedImage[y][x] = UINT32_MAX
-                    } else{
-                        modifiedImage[y][x] = 255
+                    var color: PixelColor = .clear
+                    
+                    if r == 0 && g == 0 && b == 0 && a >= 240{ //If its already black
+                        color = .black
+                    } else{ //White
+                        color = .white
                     }
+                    
+                    //Boundry Check: If pixel is on the boundry then turn it white.
+                    if x == 0 || x == cgImage.width - 1 || y == 0 || y == cgImage.height - 1 {
+                        color = .white
+                    }
+                    
+                    modifiedImage[y][x] = color.rawValue
+                    let newPixel = ImagePixel(color, xPos: x, yPos: y)
+                    pixelsImageMap["\(x)-\(y)"] = newPixel
+                    
+                    
+                    //R = 0, G = 0, B=0 A=255 Black
+                    // A == 0 Transparent
                     
 //                    print("[x:\(x), y:\(y)] \(modifiedImage[y][x])")
 //                    let components = (r: bytes[offset], g: bytes[offset + 1], b: bytes[offset + 2], a: bytes[offset + 3])
@@ -66,51 +82,73 @@ class ParseImage{
         
         for y in 0 ..< newImgPixels.count {
             for x in 0 ..< newImgPixels[y].count{
-                if processPixel(arr: newImgPixels, x: x, y: y, xOffset: nil, yOffset: nil){
-                    //Check Boundries
-                    if (x > 0 && x < cgImage.width - 1) && (y > 0 && y < cgImage.height - 1) {
-                        
-                        //Check for Top Pixel
-                        if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: -1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: -1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: -1){
-                            newImgPixels[y][x] = 1543488989
-                            imageDataObj.topPixels += 1
-                            continue
-                        }
-                        
-                        //Check for Right Pixel
-                        if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 0),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: -1){
-                            newImgPixels[y][x] = 1543488989
-                            imageDataObj.rightPixels += 1
-                            continue
-                        }
-                        
-                        //Check for Left Pixel
-                        if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 0),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: -1){
-                            newImgPixels[y][x] = 1543488989
-                            imageDataObj.leftPixels += 1
-                            continue
-                        }
-                        
-                        //Check for Bottom Pixel
-                        if processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: -1, yOffset: 1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 0, yOffset: 1),
-                           processWhitePixel(arr: newImgPixels, x: x, y: y, xOffset: 1, yOffset: 1){
-                            newImgPixels[y][x] = 1543488989
-                            imageDataObj.bottomPixels += 1
-                            continue
-                        }
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                if (x > 0 && x < cgImage.width - 1) && (y > 0 && y < cgImage.height - 1) {
+                    if modifiedImage[y][x + 1] == PixelColor.black.rawValue {
+                        currentPixel.color = .white
+                        currentPixel.pixelStatus = .deleted
+                        newImgPixels[y][x] = PixelColor.white.rawValue
                     }
+                }
+                setPixelNeighbors(pixelsImageMap, x, y, modifiedImage.count - 1, modifiedImage[y].count - 1, currentPixel)
+            }
+        }
+        
+        var newImgPixels2 = newImgPixels
+        var toBeRemovedPix: [ImagePixel] = []
+        
+        for y in 0 ..< newImgPixels2.count {
+            for x in 0 ..< newImgPixels2[y].count{
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                
+//                if currentPixel.hasPixelProcessedNeighbor(){
+//
+//                }
+                
+//                //Start Pixel
+//                if currentPixel.pixelStatus != .processed, currentPixel.color == .black, !currentPixel.hasPixelProcessedNeighbor(){
+//                    let newLine = Line()
+//                    currentPixel.color = .red
+//                    currentPixel.pixelStatus = .processed
+//                    newLine.startPixel = currentPixel
+//                    newLine.pixelPath.append(currentPixel)
+//                    newImgPixels2[y][x] = PixelColor.red.rawValue
+//                    continue
+//                }
+                if let yValue = currentPixel.largestNeighborYValue(){
+                    
+                }
+                
+//                if currentPixel.pixelStatus != .processed, currentPixel.color == black{
+//
+//                }
+                
+                
+                if currentPixel.color == .white,
+                   currentPixel.topLeftPix?.color == .black,
+                   currentPixel.pixelStatus == .deleted,
+                   currentPixel.topLeftPix?.pixelStatus != .restoredRight{
+                    
+                    currentPixel.pixelStatus = .restoredRight
+                    currentPixel.color = .black
+                    newImgPixels2[y][x] = PixelColor.black.rawValue
+                    continue
+                }
+                
+                if currentPixel.color == .white,
+                   currentPixel.pixelStatus == .deleted,
+                   currentPixel.leftPix?.pixelStatus == .restoredRight,
+                   currentPixel.rightPix?.pixelStatus != .restoredRight {
+                    
+                    currentPixel.pixelStatus = .restoredRight
+                    currentPixel.color = .black
+                    newImgPixels2[y][x] = PixelColor.black.rawValue
+                    continue
                 }
             }
         }
         
-        let data3 = newImgPixels.flatMap({$0})
+        let data3 = newImgPixels2.flatMap({$0})
         let width = Int(cgImage.width)
         let height = Int(cgImage.height)
         let bitsPerComponent = 8
@@ -137,38 +175,39 @@ class ParseImage{
         imageDataObj.image = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
         return imageDataObj
     }
-}
-
-private extension ParseImage{
     
-    func processPixel(arr: [[UInt32]], x: Int, y: Int, xOffset: Int?, yOffset: Int?) -> Bool{
-        let postion = arr[y + (yOffset ?? 0)][x + (xOffset ?? 0)]
-        if postion == 255{
-            return true
-        } else {
-            return false
+    func setPixelNeighbors(_ imgPixels: [String:ImagePixel],_ x: Int,_ y: Int,_ yMax: Int,_ xMax: Int,_ currentPixel: ImagePixel){
+        if x != 0 && y != 0{
+            currentPixel.topLeftPix = imgPixels["\(x - 1)-\(y - 1)"]
         }
-    }
-    
-    func processWhitePixel(arr: [[UInt32]], x: Int, y: Int, xOffset: Int?, yOffset: Int?) -> Bool{
-        let postion = arr[y + (yOffset ?? 0)][x + (xOffset ?? 0)]
-        if postion == UInt32.max{
-            return true
-        } else {
-            return false
+        
+        if y != 0{
+            currentPixel.topPix = imgPixels["\(x)-\(y - 1)"]
         }
-    }
-    
-    func checkPixelForColor(r: UInt8, g: UInt8, b: UInt8, a: UInt8) -> Bool{
-        if (r >= 245 && g >= 245 && b >= 245) || a < 255{
-            return false //Pixel == White
-        } else{
-            return true //Pixel == Has Color
+        
+        if x < xMax && y != 0{
+            currentPixel.topRightPix = imgPixels["\(x + 1)-\(y - 1)"]
         }
-    }
-    
-    class func getRGBAFromPixel(bytes: UnsafePointer<UInt8>, offset: Int) -> (UInt8, UInt8, UInt8, UInt8){
-        return (bytes[offset], bytes[offset + 1], bytes[offset + 2], bytes[offset + 3])
+        
+        if x < xMax{
+            currentPixel.rightPix = imgPixels["\(x + 1)-\(y)"]
+        }
+        
+        if x < xMax && y < yMax{
+            currentPixel.bottomRightPix = imgPixels["\(x + 1)-\(y + 1)"]
+        }
+        
+        if y < yMax{
+            currentPixel.bottomPix = imgPixels["\(x)-\(y + 1)"]
+        }
+        
+        if x != 0 && y < yMax{
+            currentPixel.bottomLeftPix = imgPixels["\(x - 1)-\(y + 1)"]
+        }
+        
+        if x != 0 {
+            currentPixel.leftPix = imgPixels["\(x - 1)-\(y)"]
+        }
     }
 }
 
@@ -191,3 +230,144 @@ struct Pixel {
         set { value = (UInt32(newValue) << 24) | (value & 0x00FFFFFF) }
     }
 }
+
+class Line{
+    var startPixel: ImagePixel!
+    var endPixel: ImagePixel!
+    var pixelPath: [ImagePixel] = []
+    
+    func processPixelPath() -> PixelQuadtrant?{
+        if pixelPath.count > 3{
+            //Return the Quadrant
+        }
+        return nil
+    }
+}
+
+class ImagePixel {
+    var color: PixelColor = .clear
+    var xPos: Int
+    var yPos: Int
+    var largestYPos: Int?
+    var topLeftPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(topLeftPix)
+        }
+    }
+    var topPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(topPix)
+        }
+    }
+    var topRightPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(topRightPix)
+        }
+    }
+    var rightPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(rightPix)
+        }
+    }
+    var bottomRightPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(bottomRightPix)
+        }
+    }
+    var bottomPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(bottomPix)
+        }
+    }
+    var bottomLeftPix: ImagePixel?{
+        didSet{
+            neighboringPixels.append(bottomLeftPix)
+        }
+    }
+    var leftPix: ImagePixel? {
+        didSet{
+            neighboringPixels.append(leftPix)
+        }
+    }
+    var neighboringPixels: [ImagePixel?] = []
+    
+    var pixelStatus: PixelStatus = .normal
+    
+    init(_ color: PixelColor, xPos: Int, yPos: Int) {
+        self.color = color
+        self.xPos = xPos
+        self.yPos = yPos
+    }
+    
+    func hasAtLeastOneNeighborProcessed() -> Bool{
+        return neighboringPixels.contains(where: {$0?.pixelStatus == .processed})
+    }
+    
+    func largestNeighborYValue() -> Int?{
+        let largestYValue = neighboringPixels.map({$0?.largestYPos ?? 0}).max() ?? 0
+        if largestYValue == 0 {
+            return nil
+        } else {
+            return largestYValue
+        }
+        
+    }
+}
+
+enum PixelQuadtrant{
+    case p1 // 270 - 314 degrees
+    case p2 // 315 - 360 degrees
+    case p3 // 0 - 44 degrees
+    case p4 // 45 - 90 degrees
+}
+
+enum PixelStatus{
+    case startLine
+    case processed
+    case normal
+    case deleted
+    case markForDelete
+    case restoredRight
+    case restoredLeft
+    
+}
+
+enum PixelColor: UInt32{
+    case clear = 0
+    case white = 0b11111111111111111111111111111111 //UInt32.max
+    case black = 255
+    case red = 0b11111111000000000000000011111111
+    case green = 0b00000000111111110000000011111111
+    case blue = 0b00000000000000001111111111111111 //UInt32.max
+    
+}
+
+
+extension UIColor {
+
+    convenience init(red: Int, green: Int, blue: Int) {
+        assert(red >= 0 && red <= 255, "Invalid red component")
+        assert(green >= 0 && green <= 255, "Invalid green component")
+        assert(blue >= 0 && blue <= 255, "Invalid blue component")
+
+        self.init(red: CGFloat(red) / 255.0, green: CGFloat(green) / 255.0, blue: CGFloat(blue) / 255.0, alpha: 1.0)
+    }
+
+    convenience init(rgb: Int) {
+        self.init(
+            red: (rgb >> 16) & 0xFF,
+            green: (rgb >> 8) & 0xFF,
+            blue: rgb & 0xFF
+        )
+    }
+
+    class func DarkBlue() -> UIColor{
+        return UIColor(rgb: 0x191C4B)
+    }
+    
+    class func YellowLime() -> UIColor{
+        return UIColor(rgb: 0xC5D428)
+    }
+}
+
+

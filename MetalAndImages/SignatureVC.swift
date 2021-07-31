@@ -112,7 +112,7 @@ class SignatureVC: UIViewController {
 }
 
 extension SignatureVC: CanvasViewDelegate{
-    func signatureStared() {
+    func signatureStarted() {
         UIView.animate(withDuration: 0.15) {
             self.lblSignHere.isHidden = true
         }

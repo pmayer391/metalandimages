@@ -10,7 +10,7 @@ import UIKit
 
 
 protocol CanvasViewDelegate {
-    func signatureStared()
+    func signatureStarted()
     func signatureEnded()
 }
 
@@ -34,7 +34,7 @@ class CanvasView : UIImageView {
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let delegate = delegate{
-            delegate.signatureStared()
+            delegate.signatureStarted()
         }
     }
     
