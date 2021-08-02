@@ -95,58 +95,108 @@ class ParseImage{
         }
         
         var newImgPixels2 = newImgPixels
-        var toBeRemovedPix: [ImagePixel] = []
         
         for y in 0 ..< newImgPixels2.count {
             for x in 0 ..< newImgPixels2[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
                 
-//                if currentPixel.hasPixelProcessedNeighbor(){
-//
-//                }
-                
-//                //Start Pixel
-//                if currentPixel.pixelStatus != .processed, currentPixel.color == .black, !currentPixel.hasPixelProcessedNeighbor(){
-//                    let newLine = Line()
-//                    currentPixel.color = .red
-//                    currentPixel.pixelStatus = .processed
-//                    newLine.startPixel = currentPixel
-//                    newLine.pixelPath.append(currentPixel)
-//                    newImgPixels2[y][x] = PixelColor.red.rawValue
-//                    continue
-//                }
-                if let yValue = currentPixel.largestNeighborYValue(){
+                if currentPixel.color == .white,
+                   currentPixel.bottomLeftPix?.color == .black,
+                   currentPixel.pixelStatus == .deleted,
+                   currentPixel.leftPix?.color != .black
+//                   ,currentPixel.topRightPix?.color != .black
+                {
                     
+                    currentPixel.pixelStatus = .restoredLeft
+                    currentPixel.color = .black
+                    newImgPixels2[y][x] = PixelColor.red.rawValue
                 }
                 
-//                if currentPixel.pixelStatus != .processed, currentPixel.color == black{
-//
-//                }
-                
+                if currentPixel.color == .white,
+                   currentPixel.pixelStatus == .deleted,
+                   currentPixel.leftPix?.pixelStatus == .restoredLeft,
+                   currentPixel.rightPix?.pixelStatus != .restoredLeft,
+                   currentPixel.topRightPix?.color != .black,
+                   currentPixel.bottomRightPix?.color != .black{
+                    
+                    currentPixel.pixelStatus = .restoredLeft
+                    currentPixel.color = .black
+                    newImgPixels2[y][x] = PixelColor.yellow.rawValue
+                }
                 
                 if currentPixel.color == .white,
-                   currentPixel.topLeftPix?.color == .black,
+                   (currentPixel.topLeftPix?.color == .black || currentPixel.topLeftPix?.color == .red),
                    currentPixel.pixelStatus == .deleted,
-                   currentPixel.topLeftPix?.pixelStatus != .restoredRight{
+                   currentPixel.topLeftPix?.pixelStatus != .restoredRight,
+                   currentPixel.topLeftPix?.pixelStatus != .restoredLeft,
+                   currentPixel.topLeftPix?.bottomLeftPix?.color != .black,
+                   currentPixel.topLeftPix?.topRightPix?.color != .black,
+                   currentPixel.leftPix?.color != .black
+//                   ,currentPixel.
+                
+                //TODO: Write condition for red and yellow pixels touching blue pixels
+                {
                     
                     currentPixel.pixelStatus = .restoredRight
                     currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.black.rawValue
-                    continue
+                    newImgPixels2[y][x] = PixelColor.blue.rawValue
                 }
                 
                 if currentPixel.color == .white,
                    currentPixel.pixelStatus == .deleted,
                    currentPixel.leftPix?.pixelStatus == .restoredRight,
-                   currentPixel.rightPix?.pixelStatus != .restoredRight {
+                   currentPixel.rightPix?.pixelStatus != .restoredRight,
+                   currentPixel.topRightPix?.color != .black,
+                   currentPixel.bottomRightPix?.color != .black{
                     
                     currentPixel.pixelStatus = .restoredRight
                     currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.black.rawValue
-                    continue
+                    newImgPixels2[y][x] = PixelColor.green.rawValue
                 }
+                
+
+                
             }
         }
+        
+//        var newImgPixels3 = newImgPixels2
+//        var rightLines: [Line] = []
+//
+//        for y in 0 ..< newImgPixels3.count {
+//            for x in 0 ..< newImgPixels3[y].count{
+//                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+//
+//                //Process Pixels
+//                if let neighborProcessed = currentPixel.hasAtLeastOneNeighborProcessed(),
+//                   currentPixel.pixelStatus != .processed,
+//                   currentPixel.color == .black{
+//                    let line = rightLines.filter({$0.pixelPath.contains(where: {$0.xPos == neighborProcessed.xPos && $0.yPos == neighborProcessed.yPos})}).first
+//                    currentPixel.pixelStatus = .processed
+//                    currentPixel.color = .green
+//                    line?.pixelPath.append(currentPixel)
+//                    newImgPixels3[y][x] = PixelColor.green.rawValue
+//                    continue
+//                }
+//
+//                //Start Pixel
+//                if currentPixel.pixelStatus != .processed,
+//                   currentPixel.color == .black,
+//                   currentPixel.hasAtLeastOneNeighborProcessed() == nil,
+//                   currentPixel.canBeStartPixel(){
+//
+//                    let newLine = Line()
+//                    currentPixel.color = .red
+//                    currentPixel.pixelStatus = .processed
+//                    newLine.startPixel = currentPixel
+//                    newLine.pixelPath.append(currentPixel)
+//                    newImgPixels3[y][x] = PixelColor.red.rawValue
+//                    continue
+//                }
+//
+//            }
+//        }
+        
+        
         
         let data3 = newImgPixels2.flatMap({$0})
         let width = Int(cgImage.width)
@@ -299,8 +349,8 @@ class ImagePixel {
         self.yPos = yPos
     }
     
-    func hasAtLeastOneNeighborProcessed() -> Bool{
-        return neighboringPixels.contains(where: {$0?.pixelStatus == .processed})
+    func hasAtLeastOneNeighborProcessed() -> ImagePixel?{
+        return neighboringPixels.first(where: {$0?.pixelStatus == .processed}) ?? nil
     }
     
     func largestNeighborYValue() -> Int?{
@@ -310,7 +360,15 @@ class ImagePixel {
         } else {
             return largestYValue
         }
-        
+    }
+    
+    func canBeStartPixel() -> Bool{
+        let colors = neighboringPixels.map({$0?.color})
+        let count = colors.filter({$0 == .black}).count
+        if count == 1{
+            return true
+        }
+        return false
     }
 }
 
@@ -338,7 +396,8 @@ enum PixelColor: UInt32{
     case black = 255
     case red = 0b11111111000000000000000011111111
     case green = 0b00000000111111110000000011111111
-    case blue = 0b00000000000000001111111111111111 //UInt32.max
+    case blue = 0b00000000000000001111111111111111
+    case yellow = 0b11111111111111110000000011111111
     
 }
 
