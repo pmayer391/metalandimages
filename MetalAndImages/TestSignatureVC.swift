@@ -20,7 +20,7 @@ class TestSignatureVC: UIViewController {
         super.viewDidLoad()
 
         signatureView.drawColor = .black
-        signatureView.drawWidth = 1.0
+        signatureView.drawWidth = 1
         signatureView.delegate = self
         
         imgScrollView.delegate = self

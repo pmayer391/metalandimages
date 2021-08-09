@@ -75,19 +75,22 @@ class ParseImage{
                 }
             }
         } else{
-            debugPrint("Image is not in RGB Format or Black and White Format(.monochrome)")
+            debugPrint("Image is not in RGB Format or Black and White also known as Format(.monochrome)")
         }
         
         var newImgPixels = modifiedImage
-        
+        //TODO: Add check for white pixels to save
         for y in 0 ..< newImgPixels.count {
             for x in 0 ..< newImgPixels[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
                 if (x > 0 && x < cgImage.width - 1) && (y > 0 && y < cgImage.height - 1) {
+                    /* DELETE Current Pixel if pixel has neighbor pixel to the right.
+                        ex:    @ - *
+                    */
                     if modifiedImage[y][x + 1] == PixelColor.black.rawValue {
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels[y][x] = PixelColor.white.rawValue
+                        newImgPixels[y][x] = PixelColor.brown.rawValue
                     }
                 }
                 setPixelNeighbors(pixelsImageMap, x, y, modifiedImage.count - 1, modifiedImage[y].count - 1, currentPixel)
@@ -99,31 +102,88 @@ class ParseImage{
         for y in 0 ..< newImgPixels2.count {
             for x in 0 ..< newImgPixels2[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                if currentPixel.whitePixelNeigbors == 8, currentPixel.color == .white{
+                    continue
+                }
                 
+                /* RESTORE South East Pixels
+                    ex#1:        *                  ex#2:    *
+                                /                           /
+                           * - @                           @
+                */
                 if currentPixel.color == .white,
                    currentPixel.bottomLeftPix?.color == .black,
                    currentPixel.pixelStatus == .deleted,
-                   currentPixel.leftPix?.color != .black
-//                   ,currentPixel.topRightPix?.color != .black
-                {
+                   currentPixel.leftPix?.color != .black,
+                   currentPixel.topPix?.color != .black,
+                   currentPixel.bottomRightPix?.color != .black,
+                   currentPixel.topLeftPix?.color != .black,
+                   currentPixel.topRightPix?.pixelStatus != .restoredRight,
+                   !(currentPixel.leftPix?.color == .white &&
+                     currentPixel.leftPix?.leftPix?.color == .black &&
+                     currentPixel.bottomLeftPix?.color == .black){
                     
                     currentPixel.pixelStatus = .restoredLeft
                     currentPixel.color = .black
                     newImgPixels2[y][x] = PixelColor.red.rawValue
                 }
                 
+                /* RESTORE East Facing Pixels
+                    ex:    ... - @ - @ - *
+                */
                 if currentPixel.color == .white,
                    currentPixel.pixelStatus == .deleted,
                    currentPixel.leftPix?.pixelStatus == .restoredLeft,
                    currentPixel.rightPix?.pixelStatus != .restoredLeft,
                    currentPixel.topRightPix?.color != .black,
-                   currentPixel.bottomRightPix?.color != .black{
+                   currentPixel.bottomRightPix?.color != .black,
+                   currentPixel.bottomPix?.color != .black,
+                   currentPixel.topPix?.color != .black{
                     
                     currentPixel.pixelStatus = .restoredLeft
                     currentPixel.color = .black
                     newImgPixels2[y][x] = PixelColor.yellow.rawValue
+                    
+                } else if currentPixel.color == .white,
+                  currentPixel.pixelStatus == .deleted,
+                  currentPixel.leftPix?.pixelStatus == .restoredLeft,
+                  currentPixel.topLeftPix?.color == .white,
+                  currentPixel.topPix?.color == .white,
+                  currentPixel.topRightPix?.color == .black,
+                  currentPixel.rightPix?.color == .black,
+                  currentPixel.bottomRightPix?.color == .white,
+                  currentPixel.bottomPix?.color == .white,
+                  currentPixel.bottomLeftPix?.color == .white{
+                    
+                    currentPixel.pixelStatus = .maybeRestoreLeft
+                    currentPixel.color = .white
+                    newImgPixels2[y][x] = PixelColor.gray.rawValue
+                    
+                } else if currentPixel.color == .black,
+                  currentPixel.pixelStatus == .normal,
+                  currentPixel.leftPix?.pixelStatus == .maybeRestoreLeft,
+                  currentPixel.leftPix?.color == .white,
+                  currentPixel.topLeftPix?.color == .white,
+                  currentPixel.topPix?.color == .black,
+                  currentPixel.topRightPix?.color == .white,
+                  currentPixel.rightPix?.color == .white,
+                  currentPixel.bottomRightPix?.color == .white,
+                  currentPixel.bottomPix?.color == .white,
+                  currentPixel.bottomLeftPix?.color == .white{
+                    
+                    currentPixel.leftPix?.pixelStatus = .restoredLeft
+                    currentPixel.leftPix?.color = .black
+                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.yellow.rawValue
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.orange.rawValue
                 }
                 
+                /* RESTORE South East Pixels
+                    ex#1:    *                  ex#2:    *
+                              \                           \
+                               @ - *                       @
+                */
                 if currentPixel.color == .white,
                    (currentPixel.topLeftPix?.color == .black || currentPixel.topLeftPix?.color == .red),
                    currentPixel.pixelStatus == .deleted,
@@ -131,50 +191,187 @@ class ParseImage{
                    currentPixel.topLeftPix?.pixelStatus != .restoredLeft,
                    currentPixel.topLeftPix?.bottomLeftPix?.color != .black,
                    currentPixel.topLeftPix?.topRightPix?.color != .black,
-                   currentPixel.leftPix?.color != .black
-//                   ,currentPixel.
-                
-                //TODO: Write condition for red and yellow pixels touching blue pixels
-                {
+                   currentPixel.leftPix?.color != .black,
+                   currentPixel.topRightPix?.color != .black,
+                   !(currentPixel.pixelNeighborObj.neighbors.contains(where: {$0.pixelStatus == .restoredLeft})){
                     
                     currentPixel.pixelStatus = .restoredRight
                     currentPixel.color = .black
                     newImgPixels2[y][x] = PixelColor.blue.rawValue
                 }
                 
+                /* DELETE Unused Pixel Connectors
+                    ex#1:    * - @          ex#2:    *
+                                 |                   |
+                                 *               * - @
+                */
+                if currentPixel.pixelStatus != .permanentlyDeleted,
+                   currentPixel.rightPix?.color == .black,
+                   currentPixel.rightPix?.pixelStatus == .normal,
+                   currentPixel.rightPix?.leftPix?.color == .black,
+                   (currentPixel.rightPix?.topPix?.color == .black ||
+                    currentPixel.rightPix?.bottomPix?.color == .black),
+                   (currentPixel.rightPix?.leftPix?.pixelStatus == .restoredLeft ||
+                    currentPixel.rightPix?.leftPix?.pixelStatus == .restoredRight){
+                    
+                    currentPixel.rightPix?.color = .white
+                    currentPixel.rightPix?.pixelStatus = .deleted
+                    newImgPixels2[currentPixel.rightPix?.yPos ?? y][currentPixel.rightPix?.xPos ?? x + 1] = PixelColor.pink.rawValue
+                    continue
+                }
+                
+                /* DELETE Intersections with more than  pixels intersecting
+                    ex#1:    * - @ - *          ex#2:    *     *
+                                 |                         \  /
+                                 *                       * - @
+                */
+                if currentPixel.color == .black,
+                   currentPixel.pixelNeighborObj.neighbors.filter({$0.color == .black}).count >= 3{
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.teal.rawValue
+                }
+                
+                /* RESTORE East Facing Pixels
+                    ex:    * - @ - @ - . . .
+                */
                 if currentPixel.color == .white,
                    currentPixel.pixelStatus == .deleted,
                    currentPixel.leftPix?.pixelStatus == .restoredRight,
                    currentPixel.rightPix?.pixelStatus != .restoredRight,
                    currentPixel.topRightPix?.color != .black,
-                   currentPixel.bottomRightPix?.color != .black{
+                   currentPixel.bottomRightPix?.color != .black,
+                   currentPixel.bottomPix?.color != .black,
+                   currentPixel.topPix?.color != .black {
                     
-                    currentPixel.pixelStatus = .restoredRight
-                    currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.green.rawValue
+                     currentPixel.pixelStatus = .restoredRight
+                     currentPixel.color = .black
+                     newImgPixels2[y][x] = PixelColor.green.rawValue
+                    
+                } else if currentPixel.color == .white,
+                    currentPixel.pixelStatus == .deleted,
+                    currentPixel.leftPix?.pixelStatus == .restoredRight,
+                    currentPixel.topLeftPix?.color == .white,
+                    currentPixel.topPix?.color == .white,
+                    currentPixel.topRightPix?.color == .white,
+                    currentPixel.rightPix?.color == .black,
+                    currentPixel.bottomRightPix?.color == .black,
+                    currentPixel.bottomPix?.color == .white,
+                    currentPixel.bottomLeftPix?.color == .white{
+                     
+                    currentPixel.pixelStatus = .maybeRestoreRight
+                    currentPixel.color = .white
+                    newImgPixels2[y][x] = PixelColor.gray.rawValue
+                    
+                } else if currentPixel.color == .black,
+                    currentPixel.pixelStatus == .normal,
+                    currentPixel.leftPix?.pixelStatus == .maybeRestoreRight,
+                    currentPixel.leftPix?.color == .white,
+                    currentPixel.topLeftPix?.color == .white,
+                    currentPixel.topPix?.color == .white,
+                    currentPixel.topRightPix?.color == .white,
+                    currentPixel.rightPix?.color == .white,
+                    currentPixel.bottomRightPix?.color == .white,
+                    currentPixel.bottomPix?.color == .black,
+                    currentPixel.bottomLeftPix?.color == .white{
+                    
+                    currentPixel.leftPix?.pixelStatus = .restoredRight
+                    currentPixel.leftPix?.color = .black
+                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.green.rawValue
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.orange.rawValue
                 }
                 
+                /* DELETE West Pixel Connector
+                    ex:   *
+                            \
+                             @
+                            /
+                          *
+                */
+                if currentPixel.color == .black,
+                   currentPixel.topLeftPix?.color == .black,
+                   currentPixel.bottomLeftPix?.color == .black,
+                   currentPixel.leftPix?.color == .white,
+                   currentPixel.topRightPix?.color == .white,
+                   currentPixel.bottomRightPix?.color == .white,
+                   currentPixel.rightPix?.color == .white,
+                   currentPixel.topPix?.color == .white,
+                   currentPixel.bottomPix?.color == .white,
+                   currentPixel.leftPix?.pixelStatus != .permanentlyDeleted{
 
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.gold.rawValue
+                }
+
+                /* DELETE East Pixel Connector
+                    ex:         *
+                              /
+                             @
+                              \
+                                *
+                */
+                if currentPixel.color == .black,
+                   currentPixel.topLeftPix?.color == .white,
+                   currentPixel.bottomLeftPix?.color == .white,
+                   currentPixel.leftPix?.color == .white,
+                   currentPixel.topRightPix?.color == .black,
+                   currentPixel.bottomRightPix?.color == .black,
+                   currentPixel.rightPix?.color == .white,
+                   currentPixel.topPix?.color == .white,
+                   currentPixel.bottomPix?.color == .white,
+                   currentPixel.rightPix?.pixelStatus != .permanentlyDeleted{
+
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.limeGreen.rawValue
+                }
+                
+                let coloredPixelNeighbors = currentPixel.pixelNeighborObj.neighbors.filter({$0.color == .black})
+                let notColoredPixelNeighbors = currentPixel.pixelNeighborObj.neighbors.filter({$0.color == .white && $0.pixelStatus == .deleted})
+                if coloredPixelNeighbors.count >= 2,
+                   notColoredPixelNeighbors.count >= 4,
+                   currentPixel.color == .black {
+                    let intsectingNeighbors = checkNeighborsForIntersection(currentPixel: currentPixel)
+                    
+                    newImgPixels2[y][x] = PixelColor.darkBlue.rawValue
+                    
+                    if intsectingNeighbors.count >= 3,
+                       intsectingNeighbors.filter({$0.pixelStatus == .restoredRight}).count < 2{
+                        currentPixel.color = .white
+                        currentPixel.pixelStatus = .deleted
+                        newImgPixels2[y][x] = PixelColor.purple.rawValue
+                        for pixel in intsectingNeighbors{
+                            pixel.color = .white
+                            currentPixel.pixelStatus = .permanentlyDeleted
+                            newImgPixels2[pixel.yPos][pixel.xPos] = PixelColor.grayBlue.rawValue
+                        }
+                    }
+                }
                 
             }
         }
         
-//        var newImgPixels3 = newImgPixels2
-//        var rightLines: [Line] = []
-//
-//        for y in 0 ..< newImgPixels3.count {
-//            for x in 0 ..< newImgPixels3[y].count{
-//                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
-//
+        var newImgPixels3 = newImgPixels2
+        var lines: [Line] = []
+
+        for y in 0 ..< newImgPixels3.count {
+            for x in 0 ..< newImgPixels3[y].count{
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                if currentPixel.whitePixelNeigbors == 8, currentPixel.color == .white{
+                    continue
+                }
 //                //Process Pixels
 //                if let neighborProcessed = currentPixel.hasAtLeastOneNeighborProcessed(),
 //                   currentPixel.pixelStatus != .processed,
 //                   currentPixel.color == .black{
-//                    let line = rightLines.filter({$0.pixelPath.contains(where: {$0.xPos == neighborProcessed.xPos && $0.yPos == neighborProcessed.yPos})}).first
+//                    let line = lines.filter({$0.pixelPath.contains(where: {$0.xPos == neighborProcessed.xPos && $0.yPos == neighborProcessed.yPos})}).first
 //                    currentPixel.pixelStatus = .processed
-//                    currentPixel.color = .green
+//                    currentPixel.color = .orange
 //                    line?.pixelPath.append(currentPixel)
-//                    newImgPixels3[y][x] = PixelColor.green.rawValue
+//                    newImgPixels3[y][x] = PixelColor.orange.rawValue
 //                    continue
 //                }
 //
@@ -185,20 +382,21 @@ class ParseImage{
 //                   currentPixel.canBeStartPixel(){
 //
 //                    let newLine = Line()
-//                    currentPixel.color = .red
+//                    currentPixel.color = .purple
 //                    currentPixel.pixelStatus = .processed
 //                    newLine.startPixel = currentPixel
 //                    newLine.pixelPath.append(currentPixel)
-//                    newImgPixels3[y][x] = PixelColor.red.rawValue
+//                    newImgPixels3[y][x] = PixelColor.purple.rawValue
+//                    lines.append(newLine)
 //                    continue
 //                }
-//
-//            }
-//        }
+
+            }
+        }
         
         
         
-        let data3 = newImgPixels2.flatMap({$0})
+        let data3 = newImgPixels3.flatMap({$0})
         let width = Int(cgImage.width)
         let height = Int(cgImage.height)
         let bitsPerComponent = 8
@@ -259,6 +457,150 @@ class ParseImage{
             currentPixel.leftPix = imgPixels["\(x - 1)-\(y)"]
         }
     }
+    
+    func checkNeighborsForIntersection(currentPixel: ImagePixel) -> [ImagePixel]{
+        for i in 2...3{
+            switch i {
+            case 2:
+                var intersectingPixels: [ImagePixel] = []
+                if let pix0 = currentPixel.topLeftPix?.topLeftPix, pix0.color == .black{
+                    intersectingPixels.append(pix0)
+                }
+                if let pix1 = currentPixel.topPix?.topLeftPix, pix1.color == .black{
+                    intersectingPixels.append(pix1)
+                }
+                if let pix2 = currentPixel.topPix?.topPix, pix2.color == .black{
+                    intersectingPixels.append(pix2)
+                }
+                if let pix3 = currentPixel.topPix?.topRightPix, pix3.color == .black{
+                    intersectingPixels.append(pix3)
+                }
+                if let pix4 = currentPixel.topRightPix?.topRightPix, pix4.color == .black{
+                    intersectingPixels.append(pix4)
+                }
+                if let pix5 = currentPixel.rightPix?.topRightPix, pix5.color == .black{
+                    intersectingPixels.append(pix5)
+                }
+                if let pix6 = currentPixel.rightPix?.rightPix, pix6.color == .black{
+                    intersectingPixels.append(pix6)
+                }
+                if let pix7 = currentPixel.rightPix?.bottomRightPix, pix7.color == .black{
+                    intersectingPixels.append(pix7)
+                }
+                if let pix8 = currentPixel.bottomRightPix?.bottomRightPix, pix8.color == .black{
+                    intersectingPixels.append(pix8)
+                }
+                if let pix9 = currentPixel.bottomPix?.bottomRightPix, pix9.color == .black{
+                    intersectingPixels.append(pix9)
+                }
+                if let pix10 = currentPixel.bottomPix?.bottomPix, pix10.color == .black{
+                    intersectingPixels.append(pix10)
+                }
+                if let pix11 = currentPixel.bottomPix?.bottomLeftPix, pix11.color == .black{
+                    intersectingPixels.append(pix11)
+                }
+
+                if let pix14 = currentPixel.bottomLeftPix?.bottomLeftPix, pix14.color == .black{
+                    intersectingPixels.append(pix14)
+                }
+                if let pix15 = currentPixel.leftPix?.bottomLeftPix, pix15.color == .black{
+                    intersectingPixels.append(pix15)
+                }
+                if let pix16 = currentPixel.leftPix?.leftPix, pix16.color == .black{
+                    intersectingPixels.append(pix16)
+                }
+                if let pix17 = currentPixel.leftPix?.topLeftPix, pix17.color == .black{
+                    intersectingPixels.append(pix17)
+                }
+                
+                return intersectingPixels
+                
+            case 3:
+                
+                var intersectingPixels: [ImagePixel] = []
+                if let pix0 = currentPixel.topLeftPix?.topLeftPix?.topLeftPix, pix0.color == .black{
+                    intersectingPixels.append(pix0)
+                }
+                if let pix1 = currentPixel.topPix?.topLeftPix?.topLeftPix, pix1.color == .black{
+                    intersectingPixels.append(pix1)
+                }
+                if let pix2 = currentPixel.topPix?.topPix?.topLeftPix, pix2.color == .black{
+                    intersectingPixels.append(pix2)
+                }
+                if let pix3 = currentPixel.topPix?.topPix?.topPix, pix3.color == .black{
+                    intersectingPixels.append(pix3)
+                }
+                if let pix4 = currentPixel.topPix?.topPix?.topRightPix, pix4.color == .black{
+                    intersectingPixels.append(pix4)
+                }
+                if let pix5 = currentPixel.topPix?.topRightPix?.topRightPix, pix5.color == .black{
+                    intersectingPixels.append(pix5)
+                }
+                if let pix6 = currentPixel.topRightPix?.topRightPix?.topRightPix, pix6.color == .black{
+                    intersectingPixels.append(pix6)
+                }
+                if let pix7 = currentPixel.rightPix?.topRightPix?.topRightPix, pix7.color == .black{
+                    intersectingPixels.append(pix7)
+                }
+                if let pix8 = currentPixel.rightPix?.rightPix?.topRightPix, pix8.color == .black{
+                    intersectingPixels.append(pix8)
+                }
+                if let pix9 = currentPixel.rightPix?.rightPix?.rightPix, pix9.color == .black{
+                    intersectingPixels.append(pix9)
+                }
+                if let pix10 = currentPixel.rightPix?.rightPix?.bottomRightPix, pix10.color == .black{
+                    intersectingPixels.append(pix10)
+                }
+                if let pix11 = currentPixel.rightPix?.bottomRightPix?.bottomRightPix, pix11.color == .black{
+                    intersectingPixels.append(pix11)
+                }
+                if let pix12 = currentPixel.bottomRightPix?.bottomRightPix?.bottomRightPix, pix12.color == .black{
+                    intersectingPixels.append(pix12)
+                }
+                if let pix13 = currentPixel.bottomPix?.bottomRightPix?.bottomRightPix, pix13.color == .black{
+                    intersectingPixels.append(pix13)
+                }
+                if let pix13 = currentPixel.bottomPix?.bottomPix?.bottomRightPix, pix13.color == .black{
+                    intersectingPixels.append(pix13)
+                }
+                if let pix14 = currentPixel.bottomPix?.bottomPix?.bottomPix, pix14.color == .black{
+                    intersectingPixels.append(pix14)
+                }
+                if let pix15 = currentPixel.bottomPix?.bottomPix?.bottomLeftPix, pix15.color == .black{
+                    intersectingPixels.append(pix15)
+                }
+                if let pix16 = currentPixel.bottomPix?.bottomLeftPix?.bottomLeftPix, pix16.color == .black{
+                    intersectingPixels.append(pix16)
+                }
+                if let pix17 = currentPixel.bottomLeftPix?.bottomLeftPix?.bottomLeftPix, pix17.color == .black{
+                    intersectingPixels.append(pix17)
+                }
+                if let pix18 = currentPixel.leftPix?.bottomLeftPix?.bottomLeftPix, pix18.color == .black{
+                    intersectingPixels.append(pix18)
+                }
+                if let pix19 = currentPixel.leftPix?.leftPix?.bottomLeftPix, pix19.color == .black{
+                    intersectingPixels.append(pix19)
+                }
+                if let pix20 = currentPixel.leftPix?.leftPix?.leftPix, pix20.color == .black{
+                    intersectingPixels.append(pix20)
+                }
+                if let pix21 = currentPixel.leftPix?.leftPix?.topLeftPix, pix21.color == .black{
+                    intersectingPixels.append(pix21)
+                }
+                if let pix22 = currentPixel.leftPix?.topLeftPix?.topLeftPix, pix22.color == .black{
+                    intersectingPixels.append(pix22)
+                }
+                if let pix23 = currentPixel.topLeftPix?.topLeftPix?.topLeftPix, pix23.color == .black{
+                    intersectingPixels.append(pix23)
+                }
+                return intersectingPixels
+                
+            default:
+                return []
+            }
+        }
+        return []
+    }
 }
 
 struct Pixel {
@@ -294,54 +636,98 @@ class Line{
     }
 }
 
+class PixelNieghbors {
+    var neighbors: [ImagePixel] = []
+}
+
 class ImagePixel {
     var color: PixelColor = .clear
     var xPos: Int
     var yPos: Int
-    var largestYPos: Int?
+    var pixelNeighborObj = PixelNieghbors()
+    var pixelStatus: PixelStatus = .normal
+    var whitePixelNeigbors = 0
+    
     var topLeftPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(topLeftPix)
+            if let pixel = topLeftPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var topPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(topPix)
+            if let pixel = topPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var topRightPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(topRightPix)
+            if let pixel = topRightPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var rightPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(rightPix)
+            if let pixel = rightPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var bottomRightPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(bottomRightPix)
+            if let pixel = bottomRightPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var bottomPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(bottomPix)
+            if let pixel = bottomPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var bottomLeftPix: ImagePixel?{
         didSet{
-            neighboringPixels.append(bottomLeftPix)
+            if let pixel = bottomLeftPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
     var leftPix: ImagePixel? {
         didSet{
-            neighboringPixels.append(leftPix)
+            if let pixel = leftPix{
+                pixelNeighborObj.neighbors.append(pixel)
+                if pixel.color == .white {whitePixelNeigbors = whitePixelNeigbors + 1}
+            } else{
+                whitePixelNeigbors = whitePixelNeigbors + 1
+            }
         }
     }
-    var neighboringPixels: [ImagePixel?] = []
-    
-    var pixelStatus: PixelStatus = .normal
     
     init(_ color: PixelColor, xPos: Int, yPos: Int) {
         self.color = color
@@ -350,26 +736,25 @@ class ImagePixel {
     }
     
     func hasAtLeastOneNeighborProcessed() -> ImagePixel?{
-        return neighboringPixels.first(where: {$0?.pixelStatus == .processed}) ?? nil
+        return pixelNeighborObj.neighbors.first(where: {$0.pixelStatus == .processed})
     }
     
-    func largestNeighborYValue() -> Int?{
-        let largestYValue = neighboringPixels.map({$0?.largestYPos ?? 0}).max() ?? 0
-        if largestYValue == 0 {
-            return nil
-        } else {
-            return largestYValue
-        }
-    }
     
     func canBeStartPixel() -> Bool{
-        let colors = neighboringPixels.map({$0?.color})
+        let colors = pixelNeighborObj.neighbors.map({$0.color})
         let count = colors.filter({$0 == .black}).count
         if count == 1{
             return true
         }
         return false
     }
+}
+
+enum PixelNieghborType{
+    case North
+    case East
+    case West
+    case South
 }
 
 enum PixelQuadtrant{
@@ -380,13 +765,14 @@ enum PixelQuadtrant{
 }
 
 enum PixelStatus{
-    case startLine
     case processed
     case normal
     case deleted
-    case markForDelete
+    case permanentlyDeleted
     case restoredRight
+    case maybeRestoreRight
     case restoredLeft
+    case maybeRestoreLeft
     
 }
 
@@ -398,6 +784,17 @@ enum PixelColor: UInt32{
     case green = 0b00000000111111110000000011111111
     case blue = 0b00000000000000001111111111111111
     case yellow = 0b11111111111111110000000011111111
+    case pink = 0b11111111000000001111111111111111
+    case teal = 0b00000000111111111111111111111111
+    case orange = 0xFFA500FF
+    case purple = 0x6A0DADFF
+    case limeGreen = 0xc8f542FF
+    case gold = 0xDAA520FF
+    case brown = 0x964B00FF
+    case gray = 0x808080FF
+    case grayBlue = 0x43A6C6FF
+    case darkBlue = 0x000C66FF
+    case darkGreen = 0x024b30FF
     
 }
 
