@@ -138,7 +138,9 @@ class ParseImage{
                    currentPixel.topRightPix?.color != .black,
                    currentPixel.bottomRightPix?.color != .black,
                    currentPixel.bottomPix?.color != .black,
-                   currentPixel.topPix?.color != .black{
+                   currentPixel.topPix?.color != .black,
+                   !(currentPixel.rightPix?.color == .black &&
+                    currentPixel.rightPix?.bottomRightPix?.color == .black){
                     
                     currentPixel.pixelStatus = .restoredLeft
                     currentPixel.color = .black
@@ -185,7 +187,7 @@ class ParseImage{
                                @ - *                       @
                 */
                 if currentPixel.color == .white,
-                   (currentPixel.topLeftPix?.color == .black || currentPixel.topLeftPix?.color == .red),
+                   currentPixel.topLeftPix?.color == .black,
                    currentPixel.pixelStatus == .deleted,
                    currentPixel.topLeftPix?.pixelStatus != .restoredRight,
                    currentPixel.topLeftPix?.pixelStatus != .restoredLeft,
@@ -193,6 +195,10 @@ class ParseImage{
                    currentPixel.topLeftPix?.topRightPix?.color != .black,
                    currentPixel.leftPix?.color != .black,
                    currentPixel.topRightPix?.color != .black,
+                   currentPixel.rightPix?.topRightPix?.color != .black,
+                   !(currentPixel.topLeftPix?.color == .black &&
+                    currentPixel.topLeftPix?.topRightPix?.color == .black &&
+                    currentPixel.topLeftPix?.topPix?.topRightPix?.color == .black),
                    !(currentPixel.pixelNeighborObj.neighbors.contains(where: {$0.pixelStatus == .restoredLeft})){
                     
                     currentPixel.pixelStatus = .restoredRight
@@ -207,7 +213,8 @@ class ParseImage{
                 */
                 if currentPixel.pixelStatus != .permanentlyDeleted,
                    currentPixel.rightPix?.color == .black,
-                   currentPixel.rightPix?.pixelStatus == .normal,
+                   (currentPixel.rightPix?.pixelStatus == .normal ||
+                    currentPixel.rightPix?.pixelStatus == .maybeDeleteBottom),
                    currentPixel.rightPix?.leftPix?.color == .black,
                    (currentPixel.rightPix?.topPix?.color == .black ||
                     currentPixel.rightPix?.bottomPix?.color == .black),
@@ -217,6 +224,13 @@ class ParseImage{
                     currentPixel.rightPix?.color = .white
                     currentPixel.rightPix?.pixelStatus = .deleted
                     newImgPixels2[currentPixel.rightPix?.yPos ?? y][currentPixel.rightPix?.xPos ?? x + 1] = PixelColor.pink.rawValue
+                    
+                    // DELETE potentially bad intersection result
+                    if currentPixel.rightPix?.bottomRightPix?.color == .black{
+                        currentPixel.color = .white
+                        currentPixel.pixelStatus = .deleted
+                        newImgPixels2[y][x] = PixelColor.pink.rawValue
+                    }
                     continue
                 }
                 
@@ -242,7 +256,10 @@ class ParseImage{
                    currentPixel.topRightPix?.color != .black,
                    currentPixel.bottomRightPix?.color != .black,
                    currentPixel.bottomPix?.color != .black,
-                   currentPixel.topPix?.color != .black {
+                   currentPixel.topPix?.color != .black,
+                   currentPixel.bottomLeftPix?.color != .black,
+                   !(currentPixel.rightPix?.color == .black &&
+                    currentPixel.rightPix?.topRightPix?.color == .black){
                     
                      currentPixel.pixelStatus = .restoredRight
                      currentPixel.color = .black
@@ -283,11 +300,11 @@ class ParseImage{
                     newImgPixels2[y][x] = PixelColor.orange.rawValue
                 }
                 
-                /* DELETE West Pixel Connector
+                /* DELETE Right Pixel Connector
                     ex:   *
-                            \
-                             @
-                            /
+                           \
+                            @
+                           /
                           *
                 */
                 if currentPixel.color == .black,
@@ -298,46 +315,110 @@ class ParseImage{
                    currentPixel.bottomRightPix?.color == .white,
                    currentPixel.rightPix?.color == .white,
                    currentPixel.topPix?.color == .white,
-                   currentPixel.bottomPix?.color == .white,
-                   currentPixel.leftPix?.pixelStatus != .permanentlyDeleted{
+                   currentPixel.bottomPix?.color == .white{
 
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
                     newImgPixels2[y][x] = PixelColor.gold.rawValue
                 }
+                
+                /* DELETE West Pixel Connector
+                    ex:                     ex#2:
+                                 *                   *
+                                /                   /
+                               *                    @
+                               |                    \
+                               @                     *
+                                \
+                                 *
 
-                /* DELETE East Pixel Connector
-                    ex:         *
-                              /
-                             @
-                              \
-                                *
                 */
                 if currentPixel.color == .black,
-                   currentPixel.topLeftPix?.color == .white,
+                   currentPixel.pixelStatus == .normal,
+                   currentPixel.bottomLeftPix?.pixelStatus == .normal,
+                   currentPixel.bottomLeftPix?.color == .black {
+                    currentPixel.bottomLeftPix?.pixelStatus = .maybeDeleteBottom
+                }
+                
+                if currentPixel.color == .black,
+                   currentPixel.pixelStatus == .maybeDeleteBottom{
+                    
+                    if currentPixel.bottomRightPix?.color == .black,
+                       currentPixel.bottomPix?.color == .white,
+                       currentPixel.bottomLeftPix?.color == .white,
+                       currentPixel.leftPix?.color == .white,
+                       currentPixel.topLeftPix?.color == .white,
+                       currentPixel.rightPix?.color == .white{
+                        
+                        currentPixel.color = .white
+                        currentPixel.pixelStatus = .deleted
+                        newImgPixels2[y][x] = PixelColor.darkGreen.rawValue
+                    } else if currentPixel.bottomRightPix?.color == .white,
+                              currentPixel.bottomPix?.color == .black,
+                              currentPixel.bottomLeftPix?.color == .white,
+                              currentPixel.leftPix?.color == .white,
+                              currentPixel.topLeftPix?.color == .white,
+                              currentPixel.rightPix?.color == .white {
+                        
+                        currentPixel.bottomPix?.pixelStatus = .maybeDeleteBottom
+                    }
+                }
+                
+                /* DELETE Bottom Pixel Connector
+                    ex:    *   *
+                            \ /
+                             @
+                */
+                if currentPixel.color == .black,
+                   currentPixel.topLeftPix?.color == .black,
                    currentPixel.bottomLeftPix?.color == .white,
                    currentPixel.leftPix?.color == .white,
                    currentPixel.topRightPix?.color == .black,
-                   currentPixel.bottomRightPix?.color == .black,
+                   currentPixel.bottomRightPix?.color == .white,
                    currentPixel.rightPix?.color == .white,
                    currentPixel.topPix?.color == .white,
-                   currentPixel.bottomPix?.color == .white,
-                   currentPixel.rightPix?.pixelStatus != .permanentlyDeleted{
+                   currentPixel.bottomPix?.color == .white{
 
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.limeGreen.rawValue
+                    newImgPixels2[y][x] = PixelColor.darkBlue.rawValue
                 }
                 
+                /* DELETE Top Pixel Connector
+                    ex:        @
+                              / \
+                             *   *
+                */
+                if currentPixel.color == .black,
+                   currentPixel.topLeftPix?.color == .white,
+                   currentPixel.bottomLeftPix?.color == .black,
+                   currentPixel.leftPix?.color == .white,
+                   currentPixel.topRightPix?.color == .white,
+                   currentPixel.bottomRightPix?.color == .black,
+                   currentPixel.rightPix?.color == .white,
+                   currentPixel.topPix?.color == .white,
+                   currentPixel.bottomPix?.color == .white{
+
+                    currentPixel.color = .white
+                    currentPixel.pixelStatus = .deleted
+                    newImgPixels2[y][x] = PixelColor.darkGreen.rawValue
+                }
+
+                /* DELETE Intersections
+                    ex:
+                                 *
+                                  \
+                               * - @ - *
+                                   |
+                                   *
+                              
+                */
                 let coloredPixelNeighbors = currentPixel.pixelNeighborObj.neighbors.filter({$0.color == .black})
                 let notColoredPixelNeighbors = currentPixel.pixelNeighborObj.neighbors.filter({$0.color == .white && $0.pixelStatus == .deleted})
                 if coloredPixelNeighbors.count >= 2,
                    notColoredPixelNeighbors.count >= 4,
                    currentPixel.color == .black {
                     let intsectingNeighbors = checkNeighborsForIntersection(currentPixel: currentPixel)
-                    
-                    newImgPixels2[y][x] = PixelColor.darkBlue.rawValue
-                    
                     if intsectingNeighbors.count >= 3,
                        intsectingNeighbors.filter({$0.pixelStatus == .restoredRight}).count < 2{
                         currentPixel.color = .white
@@ -750,13 +831,6 @@ class ImagePixel {
     }
 }
 
-enum PixelNieghborType{
-    case North
-    case East
-    case West
-    case South
-}
-
 enum PixelQuadtrant{
     case p1 // 270 - 314 degrees
     case p2 // 315 - 360 degrees
@@ -769,6 +843,7 @@ enum PixelStatus{
     case normal
     case deleted
     case permanentlyDeleted
+    case maybeDeleteBottom
     case restoredRight
     case maybeRestoreRight
     case restoredLeft
@@ -796,34 +871,6 @@ enum PixelColor: UInt32{
     case darkBlue = 0x000C66FF
     case darkGreen = 0x024b30FF
     
-}
-
-
-extension UIColor {
-
-    convenience init(red: Int, green: Int, blue: Int) {
-        assert(red >= 0 && red <= 255, "Invalid red component")
-        assert(green >= 0 && green <= 255, "Invalid green component")
-        assert(blue >= 0 && blue <= 255, "Invalid blue component")
-
-        self.init(red: CGFloat(red) / 255.0, green: CGFloat(green) / 255.0, blue: CGFloat(blue) / 255.0, alpha: 1.0)
-    }
-
-    convenience init(rgb: Int) {
-        self.init(
-            red: (rgb >> 16) & 0xFF,
-            green: (rgb >> 8) & 0xFF,
-            blue: rgb & 0xFF
-        )
-    }
-
-    class func DarkBlue() -> UIColor{
-        return UIColor(rgb: 0x191C4B)
-    }
-    
-    class func YellowLime() -> UIColor{
-        return UIColor(rgb: 0xC5D428)
-    }
 }
 
 
