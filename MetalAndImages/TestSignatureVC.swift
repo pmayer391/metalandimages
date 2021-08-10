@@ -37,20 +37,22 @@ class TestSignatureVC: UIViewController {
     
     @IBAction func btnDoneSigning(_ sender: Any) {
         UIView.animate(withDuration: 0.15) {
-            
-            self.imgScrollView.zoomScale = 1.0
-            self.originalScrollView.zoomScale = 1.0
-            
-            let imgParser = ParseImage()
-            if let signatureImg = self.signatureView.image{
-                let signatureImageObj = imgParser.parseImage(inputImage: signatureImg)
-                self.imgView.image = signatureImageObj?.image
-
-            }
-            
-            self.imgOriginal.image = self.signatureView.image
-            self.signatureView.clearImage()
+            self.parseImg(for: self.signatureView.image)
         }
+    }
+    
+    func parseImg(for img: UIImage?){
+        self.imgScrollView.zoomScale = 1.0
+        self.originalScrollView.zoomScale = 1.0
+        
+        if let parsableImg = img{
+            let imgParser = ParseImage()
+            let signatureImageObj = imgParser.parseImage(inputImage: parsableImg)
+            self.imgView.image = signatureImageObj?.image
+        }
+        
+        self.imgOriginal.image = self.signatureView.image
+        self.signatureView.clearImage()
     }
     
     func showAlert(message: String){
@@ -61,7 +63,7 @@ class TestSignatureVC: UIViewController {
     }
     
     @IBAction func btnSaveImg(_ sender: UIButton) {
-        if let pngImg = imgView.image{
+        if let pngImg = imgOriginal.image{
             let pngImgData = pngImg.pngData()
             UserDefaults.standard.setValue(pngImgData, forKey: "LatestImg")
             showAlert(message: "Img Saved")
@@ -72,7 +74,7 @@ class TestSignatureVC: UIViewController {
     
     @IBAction func btnGetImg(_ sender: UIButton) {
         if let imgData = UserDefaults.standard.value(forKey: "LatestImg") as? Data{
-            imgView.image = UIImage(data: imgData)
+            parseImg(for: UIImage(data: imgData))
         } else {
             showAlert(message: "There is no img saved yet.")
         }

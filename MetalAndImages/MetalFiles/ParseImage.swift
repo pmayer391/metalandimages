@@ -164,7 +164,8 @@ class ParseImage{
                     newImgPixels2[y][x] = PixelColor.gray.rawValue
                     
                 } else if currentPixel.color == .black,
-                  currentPixel.pixelStatus == .normal,
+                 (currentPixel.pixelStatus == .normal ||
+                  currentPixel.pixelStatus == .maybeDeleteBottom),
                   currentPixel.leftPix?.pixelStatus == .maybeRestoreLeft,
                   currentPixel.leftPix?.color == .white,
                   currentPixel.topLeftPix?.color == .white,

@@ -256,7 +256,7 @@
                             <constraint firstItem="dpr-PJ-vKp" firstAttribute="top" secondItem="wP2-QW-WaS" secondAttribute="top" constant="5" id="ams-WT-ArG"/>
                             <constraint firstItem="wP2-QW-WaS" firstAttribute="trailing" secondItem="TeM-qa-Hcf" secondAttribute="trailing" constant="5" id="iUO-5L-1Tl"/>
                             <constraint firstItem="dpr-PJ-vKp" firstAttribute="leading" secondItem="wP2-QW-WaS" secondAttribute="leading" constant="5" id="mJs-Xt-m1b"/>
-                            <constraint firstItem="TeM-qa-Hcf" firstAttribute="bottom" secondItem="wP2-QW-WaS" secondAttribute="bottom" constant="5" id="mPi-pU-mD2"/>
+                            <constraint firstItem="TeM-qa-Hcf" firstAttribute="bottom" secondItem="hAI-NT-Imn" secondAttribute="bottom" constant="-29" id="mPi-pU-mD2"/>
                         </constraints>
                     </view>
                     <connections>
