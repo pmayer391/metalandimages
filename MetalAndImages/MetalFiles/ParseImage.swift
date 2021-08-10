@@ -119,6 +119,8 @@ class ParseImage{
                    currentPixel.bottomRightPix?.color != .black,
                    currentPixel.topLeftPix?.color != .black,
                    currentPixel.topRightPix?.pixelStatus != .restoredRight,
+                   !(currentPixel.bottomLeftPix?.color == .black &&
+                     currentPixel.bottomLeftPix?.bottomRightPix?.color == .black),
                    !(currentPixel.leftPix?.color == .white &&
                      currentPixel.leftPix?.leftPix?.color == .black &&
                      currentPixel.bottomLeftPix?.color == .black){

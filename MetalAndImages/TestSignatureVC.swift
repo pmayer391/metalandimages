@@ -14,6 +14,7 @@ class TestSignatureVC: UIViewController {
     @IBOutlet weak var imgScrollView: UIScrollView!
     @IBOutlet var imgOriginal: UIImageView!
     @IBOutlet var originalScrollView: UIScrollView!
+    @IBOutlet var originalImgView: UIView!
     
 
     override func viewDidLoad() {
@@ -51,6 +52,43 @@ class TestSignatureVC: UIViewController {
             self.signatureView.clearImage()
         }
     }
+    
+    func showAlert(message: String){
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        let doneBtn = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+        alert.addAction(doneBtn)
+        self.present(alert, animated: true, completion: nil)
+    }
+    
+    @IBAction func btnSaveImg(_ sender: UIButton) {
+        if let pngImg = imgView.image{
+            let pngImgData = pngImg.pngData()
+            UserDefaults.standard.setValue(pngImgData, forKey: "LatestImg")
+            showAlert(message: "Img Saved")
+        } else{
+            showAlert(message: "There is no signature to save yet.")
+        }
+    }
+    
+    @IBAction func btnGetImg(_ sender: UIButton) {
+        if let imgData = UserDefaults.standard.value(forKey: "LatestImg") as? Data{
+            imgView.image = UIImage(data: imgData)
+        } else {
+            showAlert(message: "There is no img saved yet.")
+        }
+    }
+
+    @IBAction func btnShowOriginalSignature(_ sender: UIButton) {
+        let title = sender.title(for: .normal)
+        if title?.contains("Show") ?? false{
+            originalImgView.isHidden = false
+            sender.setTitle("Hide Signature", for: .normal)
+        } else {
+            originalImgView.isHidden = true
+            sender.setTitle("Show Signature", for: .normal)
+        }
+    }
+    
 }
 
 extension TestSignatureVC: CanvasViewDelegate{
