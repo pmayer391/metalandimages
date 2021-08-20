@@ -37,18 +37,27 @@ class TestSignatureVC: UIViewController {
     
     @IBAction func btnDoneSigning(_ sender: Any) {
         UIView.animate(withDuration: 0.15) {
-            self.parseImg(for: self.signatureView.image)
+            do {
+                try self.parseImg(for: self.signatureView.image)
+            } catch {
+                debugPrint("\(exception()): Unable to retrieve debug image.")
+            }
+            
         }
     }
     
-    func parseImg(for img: UIImage?){
+    func parseImg(for img: UIImage?) {
         self.imgScrollView.zoomScale = 1.0
         self.originalScrollView.zoomScale = 1.0
         
         if let parsableImg = img{
             let imgParser = ParseImage()
-            let signatureImageObj = imgParser.parseImage(inputImage: parsableImg)
-            self.imgView.image = signatureImageObj?.image
+            let signatureImageObj = imgParser.parseImage(inputImage: parsableImg, runInDebugMode: true)
+            do {
+                self.imgView.image = try signatureImageObj.map({$0.debugModeImage}).get()
+            } catch {
+                debugPrint("\(exception()): Unable to retrieve debug image.")
+            }
         }
         
         self.imgOriginal.image = self.signatureView.image
@@ -95,10 +104,7 @@ class TestSignatureVC: UIViewController {
 
 extension TestSignatureVC: CanvasViewDelegate{
     func signatureStarted() {
-        UIView.animate(withDuration: 0.15) {
-//            self.lblSignHere.isHidden = true
-            print("Nothing")
-        }
+        print("Nothing")
     }
     
     func signatureEnded() {
@@ -112,14 +118,10 @@ extension TestSignatureVC: UIScrollViewDelegate{
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         if scrollView.tag == 0{
-            print("blah")
             return imgView
         } else{
             return imgOriginal
         }
     }
     
-    func scrollViewDidEndZooming(_ scrollView: UIScrollView, with view: UIView?, atScale scale: CGFloat) {
-        print("blah1")
-    }
 }

@@ -72,7 +72,11 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
 //        mainImageView.image = rgbaImg?.toUIImage()
         
         let imageParser = ParseImage()
-        mainImageView.image = imageParser.parseImage(inputImage: imgArr[indexPath.row].img)?.image
+        do {
+            self.mainImageView.image = try imageParser.parseImage(inputImage: imgArr[indexPath.row].img).map({$0.debugModeImage}).get()
+        } catch {
+            debugPrint("\(exception()): Unable to retrieve debug image.")
+        }
         
     }
 }

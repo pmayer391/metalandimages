@@ -63,22 +63,22 @@ class SignatureVC: UIViewController {
         if let signatureImg = signatureView.image, let savedImage = signatureViewSet.image{
             let signatureImageObj = imgParser.parseImage(inputImage: signatureImg)
             let savedImageObj = imgParser.parseImage(inputImage: savedImage)
-            signatureImgParsed = signatureImageObj?.image
-            savedImgParsed = savedImageObj?.image
-            let topPercentage = computePercentage(first: signatureImageObj?.topPixels ?? 1, second: savedImageObj?.topPixels ?? 1)
-            let bottomPercentage = computePercentage(first: signatureImageObj?.bottomPixels ?? 1, second: savedImageObj?.bottomPixels ?? 1)
-            let leftPercentage = computePercentage(first: signatureImageObj?.leftPixels ?? 1, second: savedImageObj?.leftPixels ?? 1)
-            let rightPercentage = computePercentage(first: signatureImageObj?.rightPixels ?? 1, second: savedImageObj?.rightPixels ?? 1)
+//            signatureImgParsed = signatureImageObj?.image
+//            savedImgParsed = savedImageObj?.image
+//            let topPercentage = computePercentage(first: signatureImageObj?.topPixels ?? 1, second: savedImageObj?.topPixels ?? 1)
+//            let bottomPercentage = computePercentage(first: signatureImageObj?.bottomPixels ?? 1, second: savedImageObj?.bottomPixels ?? 1)
+//            let leftPercentage = computePercentage(first: signatureImageObj?.leftPixels ?? 1, second: savedImageObj?.leftPixels ?? 1)
+//            let rightPercentage = computePercentage(first: signatureImageObj?.rightPixels ?? 1, second: savedImageObj?.rightPixels ?? 1)
             
-            let topP = (topPercentage / 4) * 100
-            let bottomP = (bottomPercentage / 4) * 100
-            let leftP = (leftPercentage / 4) * 100
-            let rightP = (rightPercentage / 4) * 100
+//            let topP = (topPercentage / 4) * 100
+//            let bottomP = (bottomPercentage / 4) * 100
+//            let leftP = (leftPercentage / 4) * 100
+//            let rightP = (rightPercentage / 4) * 100
 
-            let totalPercentage = Int(topP + bottomP + leftP + rightP)
+//            let totalPercentage = Int(topP + bottomP + leftP + rightP)
             
 //            let totalPercentage = Int(((topPercentage + bottomPercentage + leftPercentage + rightPercentage) / 4) * 100)
-            lblAlert.text = "\(totalPercentage)% Match"
+//            lblAlert.text = "\(totalPercentage)% Match"
         }
         
     }

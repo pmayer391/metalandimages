@@ -15,28 +15,50 @@ import ImageIO
 
 class ParseImage{
     
-    struct ImageDataObj {
-        var topPixels = 0
-        var rightPixels = 0
-        var bottomPixels = 0
-        var leftPixels = 0
-        var image: UIImage?
-    }
-    
-    func parseImage(inputImage: UIImage) -> ImageDataObj?{
-        
-        var imageDataObj = ImageDataObj()
+    func parseImage(
+        inputImage: UIImage,
+        runInDebugMode: Bool = false,
+        degreeOfSignatureAccuracy: SignatureAccuracy = .severe
+    ) -> Result<ParsedImageObj, ImageParserError>{
         
         guard let cgImage = inputImage.cgImage,
               let data = cgImage.dataProvider?.data,
               let bytes = CFDataGetBytePtr(data)
         else {
-            debugPrint("Couldn't access CG Image Data")
-            return nil
+            return .failure(.unableToParseImage("Couldn't access CG Image Data"))
         }
         
-        var modifiedImage = [[UInt32]](repeating: [UInt32](repeating: 0, count: cgImage.width), count: cgImage.height)
+        var modifiedImage = [[UInt32]](
+            repeating: [UInt32](
+                repeating: 0,
+                count: cgImage.width),
+            count: cgImage.height)
         var pixelsImageMap: [String:ImagePixel] = [:]
+        let imageDataObj = ParsedImageObj()
+        var newImgPixels = modifiedImage
+        var newImgPixels2 = newImgPixels
+        var newImgPixels3 = newImgPixels2
+        var vectors: [PixelVector] = []
+        var quadrantDictionary: [VectorQuadtrant:Int] = [:]
+        for i in 0..<Int(degreeOfSignatureAccuracy.rawValue){
+            switch i {
+            case VectorQuadtrant.q1.rawValue:
+                quadrantDictionary[VectorQuadtrant.q1] = 0
+            case VectorQuadtrant.q2.rawValue:
+                quadrantDictionary[VectorQuadtrant.q2] = 0
+            case VectorQuadtrant.q3.rawValue:
+                quadrantDictionary[VectorQuadtrant.q3] = 0
+            case VectorQuadtrant.q4.rawValue:
+                quadrantDictionary[VectorQuadtrant.q4] = 0
+            case VectorQuadtrant.q5.rawValue:
+                quadrantDictionary[VectorQuadtrant.q5] = 0
+            case VectorQuadtrant.q6.rawValue:
+                quadrantDictionary[VectorQuadtrant.q6] = 0
+            default:
+                quadrantDictionary[VectorQuadtrant.q1] = 0
+            }
+        }
+
         
         if cgImage.colorSpace?.model == .rgb || cgImage.colorSpace?.model == .monochrome{
             let bytesPerPixel = cgImage.bitsPerPixel / cgImage.bitsPerComponent
@@ -50,7 +72,7 @@ class ParseImage{
                     
                     var color: PixelColor = .clear
                     
-                    if r == 0 && g == 0 && b == 0 && a >= 240{ //If its already black
+                    if r == 0 && g == 0 && b == 0 && a >= 200{ //If its already black
                         color = .black
                     } else{ //White
                         color = .white
@@ -64,25 +86,17 @@ class ParseImage{
                     modifiedImage[y][x] = color.rawValue
                     let newPixel = ImagePixel(color, xPos: x, yPos: y)
                     pixelsImageMap["\(x)-\(y)"] = newPixel
-                    
-                    
-                    //R = 0, G = 0, B=0 A=255 Black
-                    // A == 0 Transparent
-                    
-//                    print("[x:\(x), y:\(y)] \(modifiedImage[y][x])")
-//                    let components = (r: bytes[offset], g: bytes[offset + 1], b: bytes[offset + 2], a: bytes[offset + 3])
-//                    print("[x:\(x), y:\(y)] \(components)")
                 }
             }
         } else{
-            debugPrint("Image is not in RGB Format or Black and White also known as Format(.monochrome)")
+            return .failure(.invalidImageSupplied("Image is not in the correct format. Acceptable formats include RGB and MonoChrome"))
         }
         
-        var newImgPixels = modifiedImage
-        //TODO: Add check for white pixels to save
+        newImgPixels = modifiedImage
         for y in 0 ..< newImgPixels.count {
             for x in 0 ..< newImgPixels[y].count{
-                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
+                    return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
                 if (x > 0 && x < cgImage.width - 1) && (y > 0 && y < cgImage.height - 1) {
                     /* DELETE Current Pixel if pixel has neighbor pixel to the right.
                         ex:    @ - *
@@ -93,15 +107,21 @@ class ParseImage{
                         newImgPixels[y][x] = PixelColor.brown.rawValue
                     }
                 }
-                setPixelNeighbors(pixelsImageMap, x, y, modifiedImage.count - 1, modifiedImage[y].count - 1, currentPixel)
+                setPixelNeighbors(
+                    pixelsImageMap,
+                    x,
+                    y,
+                    modifiedImage.count - 1,
+                    modifiedImage[y].count - 1,
+                    currentPixel)
             }
         }
         
-        var newImgPixels2 = newImgPixels
-        
+        newImgPixels2 = newImgPixels
         for y in 0 ..< newImgPixels2.count {
             for x in 0 ..< newImgPixels2[y].count{
-                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
+                    return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
                 if currentPixel.whitePixelNeigbors == 8, currentPixel.color == .white{
                     continue
                 }
@@ -120,6 +140,7 @@ class ParseImage{
                    currentPixel.topLeftPix?.color != .black,
                    currentPixel.topRightPix?.pixelStatus != .restoredRight,
                    currentPixel.topPix?.pixelStatus != .maybeDeleteBottomLeft,
+                   currentPixel.topLeftPix?.topPix?.color != .black,
                    !(currentPixel.bottomLeftPix?.color == .black &&
                      currentPixel.bottomLeftPix?.bottomRightPix?.color == .black),
                    !(currentPixel.leftPix?.color == .white &&
@@ -142,6 +163,7 @@ class ParseImage{
                    currentPixel.bottomRightPix?.color != .black,
                    currentPixel.bottomPix?.color != .black,
                    currentPixel.topPix?.color != .black,
+                   currentPixel.topPix?.topPix?.color != .black,
                    !(currentPixel.rightPix?.color == .black &&
                     currentPixel.rightPix?.bottomRightPix?.color == .black){
                     
@@ -177,9 +199,9 @@ class ParseImage{
                   currentPixel.bottomPix?.color == .white,
                   currentPixel.bottomLeftPix?.color == .white{
                     
-                    currentPixel.leftPix?.pixelStatus = .restoredLeft
-                    currentPixel.leftPix?.color = .black
-                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.yellow.rawValue
+                    currentPixel.leftPix?.pixelStatus = .deleted
+                    currentPixel.leftPix?.color = .white
+                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.orange.rawValue
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
                     newImgPixels2[y][x] = PixelColor.orange.rawValue
@@ -202,6 +224,10 @@ class ParseImage{
                    currentPixel.rightPix?.topRightPix?.color != .black,
                    currentPixel.topLeftPix?.pixelStatus != .maybeDeleteBottomRight,
                    currentPixel.topPix?.pixelStatus != .deleted,
+                   !(currentPixel.topLeftPix?.color == .black &&
+                    currentPixel.rightPix?.pixelStatus == .deleted &&
+                    currentPixel.leftPix?.pixelStatus == .deleted &&
+                    currentPixel.bottomLeftPix?.color == .black),
                    !(currentPixel.topLeftPix?.color == .black &&
                     currentPixel.rightPix?.pixelStatus == .deleted &&
                     currentPixel.bottomRightPix?.color == .black &&
@@ -269,6 +295,7 @@ class ParseImage{
                    currentPixel.bottomPix?.color != .black,
                    currentPixel.topPix?.color != .black,
                    currentPixel.bottomLeftPix?.color != .black,
+                   currentPixel.bottomPix?.bottomPix?.color != .black,
                    !(currentPixel.rightPix?.color == .black &&
                     currentPixel.rightPix?.topRightPix?.color == .black){
                     
@@ -310,6 +337,9 @@ class ParseImage{
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
                     newImgPixels2[y][x] = PixelColor.orange.rawValue
+                    if currentPixel.bottomPix?.color == .black{
+                        currentPixel.bottomPix?.pixelStatus = .maybeDeleteBottomLeft
+                    }
                 }
                 
                 /* DELETE Bottom Pixel Connector
@@ -382,7 +412,6 @@ class ParseImage{
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
                         newImgPixels2[y][x] = PixelColor.lightGreen.rawValue
-                        
                     }
                     
                     if currentPixel.bottomRightPix?.color == .white,
@@ -456,7 +485,7 @@ class ParseImage{
                        intsectingNeighbors.filter({$0.pixelStatus == .restoredRight}).count < 2{
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels2[y][x] = PixelColor.purple.rawValue
+                        newImgPixels2[y][x] = PixelColor.gold.rawValue
                         for pixel in intsectingNeighbors{
                             pixel.color = .white
                             currentPixel.pixelStatus = .permanentlyDeleted
@@ -464,78 +493,169 @@ class ParseImage{
                         }
                     }
                 }
-                
             }
         }
-        
-        var newImgPixels3 = newImgPixels2
-        var lines: [Line] = []
 
         for y in 0 ..< newImgPixels3.count {
             for x in 0 ..< newImgPixels3[y].count{
-                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {return nil}
-                if currentPixel.whitePixelNeigbors == 8, currentPixel.color == .white{
+                guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
+                    return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
+                if (currentPixel.whitePixelNeigbors == 8 &&
+                        currentPixel.color == .white) ||
+                    (currentPixel.pixelStatus == .processed) {
                     continue
                 }
-//                //Process Pixels
-//                if let neighborProcessed = currentPixel.hasAtLeastOneNeighborProcessed(),
-//                   currentPixel.pixelStatus != .processed,
-//                   currentPixel.color == .black{
-//                    let line = lines.filter({$0.pixelPath.contains(where: {$0.xPos == neighborProcessed.xPos && $0.yPos == neighborProcessed.yPos})}).first
-//                    currentPixel.pixelStatus = .processed
-//                    currentPixel.color = .orange
-//                    line?.pixelPath.append(currentPixel)
-//                    newImgPixels3[y][x] = PixelColor.orange.rawValue
-//                    continue
-//                }
-//
-//                //Start Pixel
-//                if currentPixel.pixelStatus != .processed,
-//                   currentPixel.color == .black,
-//                   currentPixel.hasAtLeastOneNeighborProcessed() == nil,
-//                   currentPixel.canBeStartPixel(){
-//
-//                    let newLine = Line()
-//                    currentPixel.color = .purple
-//                    currentPixel.pixelStatus = .processed
-//                    newLine.startPixel = currentPixel
-//                    newLine.pixelPath.append(currentPixel)
-//                    newImgPixels3[y][x] = PixelColor.purple.rawValue
-//                    lines.append(newLine)
-//                    continue
-//                }
+                //Process Pixels into Vectors
+                if currentPixel.color == .black,
+                   currentPixel.hasAtLeastOneNeighborProcessed() == nil,
+                   currentPixel.canBeStartPixel(){
 
+                    let vector = PixelVector()
+                    vector.startPixel = currentPixel
+                    currentPixel.pixelStatus = .processed
+                    newImgPixels3[y][x] = PixelColor.purple.rawValue
+                    processLine(pixelImage: currentPixel, line: vector, &newImgPixels3)
+                    let lastPixel = vector.pixelPath.last
+                    vector.endPixel = lastPixel
+                    newImgPixels3[lastPixel?.yPos ?? 0][lastPixel?.xPos ?? 0] = PixelColor.blue.rawValue
+                    if vector.pixelPath.count > 6{
+                        vectors.append(vector)
+                    }
+                    continue
+                }
+            }
+        }
+        
+        let quadrantDegrees = 180.0 / degreeOfSignatureAccuracy.rawValue
+        var quadrantRanges: [Range<Double>] = []
+        var quadrants: [VectorQuadtrant] = []
+
+        let q1PosMax: Double = 90
+        let q1NegMax: Double = -90
+        let q1PosMin = q1PosMax - (quadrantDegrees / 2)
+        let q1NegMin = q1NegMax + (quadrantDegrees / 2)
+        let q1PosRange: Range<Double> = q1PosMin..<q1PosMax
+        let q1NegRange: Range<Double> = q1NegMax..<q1NegMin
+        quadrantRanges.append(q1PosRange)
+        quadrants.append(VectorQuadtrant.q1)
+        quadrantRanges.append(q1NegRange)
+        quadrants.append(VectorQuadtrant.q1)
+
+        switch degreeOfSignatureAccuracy {
+        case .relaxed:
+            let q2And3Min = q1PosMin - quadrantDegrees
+            let q2Range: Range<Double> = q2And3Min..<q1PosMin
+            quadrantRanges.append(q2Range)
+            quadrants.append(VectorQuadtrant.q2)
+            let q3Range: Range<Double>  = q1NegMin..<q2And3Min
+            quadrantRanges.append(q3Range)
+            quadrants.append(VectorQuadtrant.q3)
+        case .standard:
+            let q2Min = q1PosMin - quadrantDegrees
+            let q2Range: Range<Double> = q2Min..<q1PosMin
+            quadrantRanges.append(q2Range)
+            quadrants.append(VectorQuadtrant.q2)
+            let q4Min = q1NegMin + quadrantDegrees
+            let q4Range: Range<Double> = q1NegMin..<q4Min
+            quadrantRanges.append(q4Range)
+            quadrants.append(VectorQuadtrant.q4)
+            let q3Range: Range<Double>  = q4Min..<q2Min
+            quadrantRanges.append(q3Range)
+            quadrants.append(VectorQuadtrant.q3)
+        case .strict:
+            let q2Min = q1PosMin - quadrantDegrees
+            let q2Range: Range<Double> = q2Min..<q1PosMin
+            quadrantRanges.append(q2Range)
+            quadrants.append(VectorQuadtrant.q2)
+            let q3Min = q2Min - quadrantDegrees
+            let q3Range: Range<Double>  = q3Min..<q2Min
+            quadrantRanges.append(q3Range)
+            quadrants.append(VectorQuadtrant.q3)
+            let q5Min = q1NegMin + quadrantDegrees
+            let q5Range: Range<Double> = q1NegMin..<q5Min
+            quadrantRanges.append(q5Range)
+            quadrants.append(VectorQuadtrant.q5)
+            let q4Min = q5Min + quadrantDegrees
+            let q4Range: Range<Double> = q5Min..<q4Min
+            quadrantRanges.append(q4Range)
+            quadrants.append(VectorQuadtrant.q4)
+        case .severe:
+            let q2Min = q1PosMin - quadrantDegrees
+            let q2Range: Range<Double> = q2Min..<q1PosMin
+            quadrantRanges.append(q2Range)
+            quadrants.append(VectorQuadtrant.q2)
+            let q3Min = q2Min - quadrantDegrees
+            let q3Range: Range<Double>  = q3Min..<q2Min
+            quadrantRanges.append(q3Range)
+            quadrants.append(VectorQuadtrant.q3)
+            let q5Min = q1NegMin + quadrantDegrees
+            let q5Range: Range<Double> = q1NegMin..<q5Min
+            quadrantRanges.append(q5Range)
+            quadrants.append(VectorQuadtrant.q5)
+            let q4Min = q5Min + quadrantDegrees
+            let q4Range: Range<Double> = q5Min..<q4Min
+            quadrantRanges.append(q4Range)
+            quadrants.append(VectorQuadtrant.q4)
+            let q6Range: Range<Double> = q4Min..<q3Min
+            quadrantRanges.append(q6Range)
+            quadrants.append(VectorQuadtrant.q6)
+        }
+
+        for vector in vectors{
+            if let quadrantRangeIndex = quadrantRanges.firstIndex(where: {$0.contains(vector.angle)}){
+                let quadrant = quadrants[quadrantRangeIndex]
+                quadrantDictionary[quadrant] = (quadrantDictionary[quadrant] ?? 0) + 1
             }
         }
         
         
-        
-        let data3 = newImgPixels3.flatMap({$0})
-        let width = Int(cgImage.width)
-        let height = Int(cgImage.height)
-        let bitsPerComponent = 8
-        let bytesPerPixel2 = 4
-        let bytesPerRow = width * bytesPerPixel2
-        let imageData = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
-        let colorSpace = CGColorSpaceCreateDeviceRGB()
-        var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
-        bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
+        if runInDebugMode{
+            let imageData = newImgPixels3.flatMap({$0})
+            let width = Int(cgImage.width)
+            let height = Int(cgImage.height)
+            let bitsPerComponent = 8
+            let bytesPerPixel2 = 4
+            let bytesPerRow = width * bytesPerPixel2
+            let imageDataMemoryAllocation = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
+            let colorSpace = CGColorSpaceCreateDeviceRGB()
+            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
+            bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
 
-        guard let imageContext = CGContext(data: imageData,
-                                           width: width,
-                                           height: height,
-                                           bitsPerComponent: bitsPerComponent,
-                                           bytesPerRow: bytesPerRow,
-                                           space: colorSpace,
-                                           bitmapInfo: bitmapInfo),
-              let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: data3.count)
-        else { return nil }
+            guard let imageContext = CGContext(data: imageDataMemoryAllocation,
+                                               width: width,
+                                               height: height,
+                                               bitsPerComponent: bitsPerComponent,
+                                               bytesPerRow: bytesPerRow,
+                                               space: colorSpace,
+                                               bitmapInfo: bitmapInfo),
+                  let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: imageData.count) else {
+                return .failure(.unableToParseImage("Unable to create an image context to convert 2D image pixels into a UIImage."))}
 
-        for index in 0 ..< width * height {
-            buffer[index] = data3[index]
+            for index in 0 ..< width * height {
+                buffer[index] = imageData[index]
+            }
+            imageDataObj.debugModeImage = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
+            return .success(imageDataObj)
         }
-        imageDataObj.image = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
-        return imageDataObj
+        
+        return .failure(.unknownError("Unknown Error Occured."))
+    }
+    
+    func processLine(pixelImage: ImagePixel?, line: PixelVector, _ imgPixels: inout [[UInt32]]){
+        guard let currentPixel = pixelImage else { return }
+        
+        let nextNeighbor = currentPixel.neighbors.filter({$0.color == .black && $0.pixelStatus != .processed})
+        if nextNeighbor.count == 1{
+            guard let pixelToProcess = nextNeighbor.first else {debugPrint("Something strange happened."); return }
+            pixelToProcess.pixelStatus = .processed
+            imgPixels[pixelToProcess.yPos][pixelToProcess.xPos] = PixelColor.orange.rawValue
+            line.pixelPath.append(pixelToProcess)
+            processLine(pixelImage: pixelToProcess, line: line, &imgPixels)
+        } else if nextNeighbor.count == 0{
+            return
+        } else{
+            debugPrint("Something went awfully wrong with parsing this signature.")
+        }
     }
     
     func setPixelNeighbors(_ imgPixels: [String:ImagePixel],_ x: Int,_ y: Int,_ yMax: Int,_ xMax: Int,_ currentPixel: ImagePixel){
@@ -573,171 +693,70 @@ class ParseImage{
     }
     
     func checkNeighborsForIntersection(currentPixel: ImagePixel) -> [ImagePixel]{
-        for i in 2...3{
-            switch i {
-            case 2:
-                var intersectingPixels: [ImagePixel] = []
-                if let pix0 = currentPixel.topLeftPix?.topLeftPix, pix0.color == .black{
-                    intersectingPixels.append(pix0)
-                }
-                if let pix1 = currentPixel.topPix?.topLeftPix, pix1.color == .black{
-                    intersectingPixels.append(pix1)
-                }
-                if let pix2 = currentPixel.topPix?.topPix, pix2.color == .black{
-                    intersectingPixels.append(pix2)
-                }
-                if let pix3 = currentPixel.topPix?.topRightPix, pix3.color == .black{
-                    intersectingPixels.append(pix3)
-                }
-                if let pix4 = currentPixel.topRightPix?.topRightPix, pix4.color == .black{
-                    intersectingPixels.append(pix4)
-                }
-                if let pix5 = currentPixel.rightPix?.topRightPix, pix5.color == .black{
-                    intersectingPixels.append(pix5)
-                }
-                if let pix6 = currentPixel.rightPix?.rightPix, pix6.color == .black{
-                    intersectingPixels.append(pix6)
-                }
-                if let pix7 = currentPixel.rightPix?.bottomRightPix, pix7.color == .black{
-                    intersectingPixels.append(pix7)
-                }
-                if let pix8 = currentPixel.bottomRightPix?.bottomRightPix, pix8.color == .black{
-                    intersectingPixels.append(pix8)
-                }
-                if let pix9 = currentPixel.bottomPix?.bottomRightPix, pix9.color == .black{
-                    intersectingPixels.append(pix9)
-                }
-                if let pix10 = currentPixel.bottomPix?.bottomPix, pix10.color == .black{
-                    intersectingPixels.append(pix10)
-                }
-                if let pix11 = currentPixel.bottomPix?.bottomLeftPix, pix11.color == .black{
-                    intersectingPixels.append(pix11)
-                }
-                if let pix14 = currentPixel.bottomLeftPix?.bottomLeftPix, pix14.color == .black{
-                    intersectingPixels.append(pix14)
-                }
-                if let pix15 = currentPixel.leftPix?.bottomLeftPix, pix15.color == .black{
-                    intersectingPixels.append(pix15)
-                }
-                if let pix16 = currentPixel.leftPix?.leftPix, pix16.color == .black{
-                    intersectingPixels.append(pix16)
-                }
-                if let pix17 = currentPixel.leftPix?.topLeftPix, pix17.color == .black{
-                    intersectingPixels.append(pix17)
-                }
-                
-                //TODO: This is a really ugly solution and needs a better solution to see if one list contains an elemnt from another solution
-                var tempIntersectingPixels = intersectingPixels
-                for pixel in intersectingPixels{
-                    let neighbors = pixel.neighbors
-                    for (index2, pixel2) in intersectingPixels.enumerated(){
-                        if neighbors.contains(where: {$0.xPos == pixel2.xPos && $0.yPos == pixel2.yPos}) {
-                            let range = 0..<tempIntersectingPixels.count
-                            if range.contains(index2){
-                                tempIntersectingPixels.remove(at: index2)
-                            }
-                        }
+        var intersectingPixels: [ImagePixel] = []
+        if let pix0 = currentPixel.topLeftPix?.topLeftPix, pix0.color == .black{
+            intersectingPixels.append(pix0)
+        }
+        if let pix1 = currentPixel.topPix?.topLeftPix, pix1.color == .black{
+            intersectingPixels.append(pix1)
+        }
+        if let pix2 = currentPixel.topPix?.topPix, pix2.color == .black{
+            intersectingPixels.append(pix2)
+        }
+        if let pix3 = currentPixel.topPix?.topRightPix, pix3.color == .black{
+            intersectingPixels.append(pix3)
+        }
+        if let pix4 = currentPixel.topRightPix?.topRightPix, pix4.color == .black{
+            intersectingPixels.append(pix4)
+        }
+        if let pix5 = currentPixel.rightPix?.topRightPix, pix5.color == .black{
+            intersectingPixels.append(pix5)
+        }
+        if let pix6 = currentPixel.rightPix?.rightPix, pix6.color == .black{
+            intersectingPixels.append(pix6)
+        }
+        if let pix7 = currentPixel.rightPix?.bottomRightPix, pix7.color == .black{
+            intersectingPixels.append(pix7)
+        }
+        if let pix8 = currentPixel.bottomRightPix?.bottomRightPix, pix8.color == .black{
+            intersectingPixels.append(pix8)
+        }
+        if let pix9 = currentPixel.bottomPix?.bottomRightPix, pix9.color == .black{
+            intersectingPixels.append(pix9)
+        }
+        if let pix10 = currentPixel.bottomPix?.bottomPix, pix10.color == .black{
+            intersectingPixels.append(pix10)
+        }
+        if let pix11 = currentPixel.bottomPix?.bottomLeftPix, pix11.color == .black{
+            intersectingPixels.append(pix11)
+        }
+        if let pix14 = currentPixel.bottomLeftPix?.bottomLeftPix, pix14.color == .black{
+            intersectingPixels.append(pix14)
+        }
+        if let pix15 = currentPixel.leftPix?.bottomLeftPix, pix15.color == .black{
+            intersectingPixels.append(pix15)
+        }
+        if let pix16 = currentPixel.leftPix?.leftPix, pix16.color == .black{
+            intersectingPixels.append(pix16)
+        }
+        if let pix17 = currentPixel.leftPix?.topLeftPix, pix17.color == .black{
+            intersectingPixels.append(pix17)
+        }
+        
+        //TODO: Fix this. . . This is a really ugly solution and needs a better approach to check whether one list contains an elemnt from another list.
+        var tempIntersectingPixels = intersectingPixels
+        for pixel in intersectingPixels{
+            let neighbors = pixel.neighbors
+            for (index2, pixel2) in intersectingPixels.enumerated(){
+                if neighbors.contains(where: {$0.xPos == pixel2.xPos && $0.yPos == pixel2.yPos}) {
+                    let range = 0..<tempIntersectingPixels.count
+                    if range.contains(index2){
+                        tempIntersectingPixels.remove(at: index2)
                     }
                 }
-                
-                return tempIntersectingPixels
-                
-            case 3:
-                
-                var intersectingPixels: [ImagePixel] = []
-                if let pix0 = currentPixel.topLeftPix?.topLeftPix?.topLeftPix, pix0.color == .black{
-                    intersectingPixels.append(pix0)
-                }
-                if let pix1 = currentPixel.topPix?.topLeftPix?.topLeftPix, pix1.color == .black{
-                    intersectingPixels.append(pix1)
-                }
-                if let pix2 = currentPixel.topPix?.topPix?.topLeftPix, pix2.color == .black{
-                    intersectingPixels.append(pix2)
-                }
-                if let pix3 = currentPixel.topPix?.topPix?.topPix, pix3.color == .black{
-                    intersectingPixels.append(pix3)
-                }
-                if let pix4 = currentPixel.topPix?.topPix?.topRightPix, pix4.color == .black{
-                    intersectingPixels.append(pix4)
-                }
-                if let pix5 = currentPixel.topPix?.topRightPix?.topRightPix, pix5.color == .black{
-                    intersectingPixels.append(pix5)
-                }
-                if let pix6 = currentPixel.topRightPix?.topRightPix?.topRightPix, pix6.color == .black{
-                    intersectingPixels.append(pix6)
-                }
-                if let pix7 = currentPixel.rightPix?.topRightPix?.topRightPix, pix7.color == .black{
-                    intersectingPixels.append(pix7)
-                }
-                if let pix8 = currentPixel.rightPix?.rightPix?.topRightPix, pix8.color == .black{
-                    intersectingPixels.append(pix8)
-                }
-                if let pix9 = currentPixel.rightPix?.rightPix?.rightPix, pix9.color == .black{
-                    intersectingPixels.append(pix9)
-                }
-                if let pix10 = currentPixel.rightPix?.rightPix?.bottomRightPix, pix10.color == .black{
-                    intersectingPixels.append(pix10)
-                }
-                if let pix11 = currentPixel.rightPix?.bottomRightPix?.bottomRightPix, pix11.color == .black{
-                    intersectingPixels.append(pix11)
-                }
-                if let pix12 = currentPixel.bottomRightPix?.bottomRightPix?.bottomRightPix, pix12.color == .black{
-                    intersectingPixels.append(pix12)
-                }
-                if let pix13 = currentPixel.bottomPix?.bottomRightPix?.bottomRightPix, pix13.color == .black{
-                    intersectingPixels.append(pix13)
-                }
-                if let pix13 = currentPixel.bottomPix?.bottomPix?.bottomRightPix, pix13.color == .black{
-                    intersectingPixels.append(pix13)
-                }
-                if let pix14 = currentPixel.bottomPix?.bottomPix?.bottomPix, pix14.color == .black{
-                    intersectingPixels.append(pix14)
-                }
-                if let pix15 = currentPixel.bottomPix?.bottomPix?.bottomLeftPix, pix15.color == .black{
-                    intersectingPixels.append(pix15)
-                }
-                if let pix16 = currentPixel.bottomPix?.bottomLeftPix?.bottomLeftPix, pix16.color == .black{
-                    intersectingPixels.append(pix16)
-                }
-                if let pix17 = currentPixel.bottomLeftPix?.bottomLeftPix?.bottomLeftPix, pix17.color == .black{
-                    intersectingPixels.append(pix17)
-                }
-                if let pix18 = currentPixel.leftPix?.bottomLeftPix?.bottomLeftPix, pix18.color == .black{
-                    intersectingPixels.append(pix18)
-                }
-                if let pix19 = currentPixel.leftPix?.leftPix?.bottomLeftPix, pix19.color == .black{
-                    intersectingPixels.append(pix19)
-                }
-                if let pix20 = currentPixel.leftPix?.leftPix?.leftPix, pix20.color == .black{
-                    intersectingPixels.append(pix20)
-                }
-                if let pix21 = currentPixel.leftPix?.leftPix?.topLeftPix, pix21.color == .black{
-                    intersectingPixels.append(pix21)
-                }
-                if let pix22 = currentPixel.leftPix?.topLeftPix?.topLeftPix, pix22.color == .black{
-                    intersectingPixels.append(pix22)
-                }
-                if let pix23 = currentPixel.topLeftPix?.topLeftPix?.topLeftPix, pix23.color == .black{
-                    intersectingPixels.append(pix23)
-                }
-                
-                //TODO: This is a really ugly solution and needs a better solution to see if one list contains an elemnt from another solution
-                for pixel in intersectingPixels{
-                    let neighbors = pixel.neighbors
-                    for (index2, pixel2) in intersectingPixels.enumerated(){
-                        if neighbors.contains(where: {$0.xPos == pixel2.xPos && $0.yPos == pixel2.yPos}){
-                            intersectingPixels.remove(at: index2)
-                        }
-                    }
-                }
-                
-                return intersectingPixels
-                
-            default:
-                return []
             }
         }
-        return []
+        return tempIntersectingPixels
     }
 }
 
@@ -761,17 +780,27 @@ struct Pixel {
     }
 }
 
-class Line{
+class PixelVector{
     var startPixel: ImagePixel!
-    var endPixel: ImagePixel!
-    var pixelPath: [ImagePixel] = []
-    
-    func processPixelPath() -> PixelQuadtrant?{
-        if pixelPath.count > 3{
-            //Return the Quadrant
+    var endPixel: ImagePixel!{
+        didSet{
+            let firstPixel: ImagePixel!
+            let secondPixel: ImagePixel!
+            if startPixel.xPos <= endPixel.xPos{
+                firstPixel = startPixel
+                secondPixel = endPixel
+            } else {
+                firstPixel = endPixel
+                secondPixel = startPixel
+            }
+            
+            angle = atan((Double(secondPixel.yPos) - Double(firstPixel.yPos)) / (Double(secondPixel.xPos) - Double(firstPixel.xPos))) * (180 / Double.pi)
+            print("Angle: \(angle)")
         }
-        return nil
     }
+    var pixelPath: [ImagePixel] = []
+    var angle: Double!
+    
 }
 
 class ImagePixel{
@@ -874,22 +903,32 @@ class ImagePixel{
     }
     
     
+    func processPixelNeighbors() -> [ImagePixel]{
+        return neighbors.filter({$0.color == .black && $0.pixelStatus != .processed})
+    }
+    
+    
     func canBeStartPixel() -> Bool{
-        let colors = neighbors.map({$0.color})
-        let count = colors.filter({$0 == .black}).count
-        if count == 1{
+        if neighbors.filter({$0.color == .black}).count == 1{
             return true
         }
         return false
     }
-    
 }
 
-enum PixelQuadtrant{
-    case p1 // 270 - 314 degrees
-    case p2 // 315 - 360 degrees
-    case p3 // 0 - 44 degrees
-    case p4 // 45 - 90 degrees
+class ParsedImageObj {
+    var quadrants: [VectorQuadtrant:Int] = [:]
+    var nonBreakingErrorMessages: [String] = []
+    var debugModeImage: UIImage?
+}
+
+enum VectorQuadtrant: Int{
+    case q1 = 0
+    case q2 = 1
+    case q3 = 2
+    case q4 = 3
+    case q5 = 4
+    case q6 = 5
 }
 
 enum PixelStatus{
@@ -925,7 +964,20 @@ enum PixelColor: UInt32{
     case grayBlue = 0x43A6C6FF
     case darkBlue = 0x000C66FF
     case darkGreen = 0x024b30FF
-    
+}
+
+public enum SignatureAccuracy: Double{
+    case relaxed = 3
+    case standard = 4
+    case strict = 5
+    case severe = 6
+}
+
+public enum ImageParserError: Error {
+    case invalidImageSupplied(String)
+    case unableToParseImage(String)
+    case invalidSignature(String)
+    case unknownError(String)
 }
 
 
