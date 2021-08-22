@@ -21,6 +21,8 @@ class ParseImage{
         degreeOfSignatureAccuracy: SignatureAccuracy = .severe
     ) -> Result<ParsedImageObj, ImageParserError>{
         
+        //MARK: - INIT VARS
+        let startTiming = CFAbsoluteTimeGetCurrent()
         guard let cgImage = inputImage.cgImage,
               let data = cgImage.dataProvider?.data,
               let bytes = CFDataGetBytePtr(data)
@@ -28,16 +30,16 @@ class ParseImage{
             return .failure(.unableToParseImage("Couldn't access CG Image Data"))
         }
         
-        var modifiedImage = [[UInt32]](
+        var imagePixelsPhase1 = [[UInt32]](
             repeating: [UInt32](
                 repeating: 0,
                 count: cgImage.width),
             count: cgImage.height)
         var pixelsImageMap: [String:ImagePixel] = [:]
-        let imageDataObj = ParsedImageObj()
-        var newImgPixels = modifiedImage
-        var newImgPixels2 = newImgPixels
-        var newImgPixels3 = newImgPixels2
+        let parsedImageObj = ParsedImageObj()
+        var imagePixelsPhase2 = imagePixelsPhase1
+        var imagePixelsPhase3 = imagePixelsPhase2
+        var imagePixelsPhase4 = imagePixelsPhase3
         var vectors: [PixelVector] = []
         var quadrantDictionary: [VectorQuadtrant:Int] = [:]
         for i in 0..<Int(degreeOfSignatureAccuracy.rawValue){
@@ -59,7 +61,7 @@ class ParseImage{
             }
         }
 
-        
+        //MARK: - PHASE 1 - Converts image to black and white image only.
         if cgImage.colorSpace?.model == .rgb || cgImage.colorSpace?.model == .monochrome{
             let bytesPerPixel = cgImage.bitsPerPixel / cgImage.bitsPerComponent
             for y in 0 ..< cgImage.height {
@@ -83,7 +85,7 @@ class ParseImage{
                         color = .white
                     }
                     
-                    modifiedImage[y][x] = color.rawValue
+                    imagePixelsPhase1[y][x] = color.rawValue
                     let newPixel = ImagePixel(color, xPos: x, yPos: y)
                     pixelsImageMap["\(x)-\(y)"] = newPixel
                 }
@@ -92,34 +94,36 @@ class ParseImage{
             return .failure(.invalidImageSupplied("Image is not in the correct format. Acceptable formats include RGB and MonoChrome"))
         }
         
-        newImgPixels = modifiedImage
-        for y in 0 ..< newImgPixels.count {
-            for x in 0 ..< newImgPixels[y].count{
+        //MARK: - PHASE 2 - Delete all neighbor pixels to the left.
+        imagePixelsPhase2 = imagePixelsPhase1
+        for y in 0 ..< imagePixelsPhase2.count {
+            for x in 0 ..< imagePixelsPhase2[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
                     return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
                 if (x > 0 && x < cgImage.width - 1) && (y > 0 && y < cgImage.height - 1) {
                     /* DELETE Current Pixel if pixel has neighbor pixel to the right.
                         ex:    @ - *
                     */
-                    if modifiedImage[y][x + 1] == PixelColor.black.rawValue {
+                    if imagePixelsPhase1[y][x + 1] == PixelColor.black.rawValue {
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels[y][x] = PixelColor.brown.rawValue
+                        imagePixelsPhase2[y][x] = PixelColor.brown.rawValue
                     }
                 }
                 setPixelNeighbors(
                     pixelsImageMap,
                     x,
                     y,
-                    modifiedImage.count - 1,
-                    modifiedImage[y].count - 1,
+                    imagePixelsPhase1.count - 1,
+                    imagePixelsPhase1[y].count - 1,
                     currentPixel)
             }
         }
         
-        newImgPixels2 = newImgPixels
-        for y in 0 ..< newImgPixels2.count {
-            for x in 0 ..< newImgPixels2[y].count{
+        //MARK: - PHASE 3 - Transform image signature into vectors.
+        imagePixelsPhase3 = imagePixelsPhase2
+        for y in 0 ..< imagePixelsPhase3.count {
+            for x in 0 ..< imagePixelsPhase3[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
                     return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
                 if currentPixel.whitePixelNeigbors == 8, currentPixel.color == .white{
@@ -149,7 +153,7 @@ class ParseImage{
                     
                     currentPixel.pixelStatus = .restoredLeft
                     currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.red.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.red.rawValue
                 }
                 
                 /* RESTORE East Facing Pixels
@@ -169,7 +173,7 @@ class ParseImage{
                     
                     currentPixel.pixelStatus = .restoredLeft
                     currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.yellow.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.yellow.rawValue
                     
                 } else if currentPixel.color == .white,
                   currentPixel.pixelStatus == .deleted,
@@ -184,7 +188,7 @@ class ParseImage{
                     
                     currentPixel.pixelStatus = .maybeRestoreLeft
                     currentPixel.color = .white
-                    newImgPixels2[y][x] = PixelColor.gray.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.gray.rawValue
                     
                 } else if currentPixel.color == .black,
                  (currentPixel.pixelStatus == .normal ||
@@ -201,10 +205,10 @@ class ParseImage{
                     
                     currentPixel.leftPix?.pixelStatus = .deleted
                     currentPixel.leftPix?.color = .white
-                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.orange.rawValue
+                    imagePixelsPhase3[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.orange.rawValue
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.orange.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.orange.rawValue
                 }
                 
                 /* RESTORE South East Pixels
@@ -239,7 +243,7 @@ class ParseImage{
                     
                     currentPixel.pixelStatus = .restoredRight
                     currentPixel.color = .black
-                    newImgPixels2[y][x] = PixelColor.blue.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.blue.rawValue
                 }
                 
                 /* DELETE Unused Pixel Connectors
@@ -260,13 +264,13 @@ class ParseImage{
                     
                     currentPixel.rightPix?.color = .white
                     currentPixel.rightPix?.pixelStatus = .deleted
-                    newImgPixels2[currentPixel.rightPix?.yPos ?? y][currentPixel.rightPix?.xPos ?? x + 1] = PixelColor.pink.rawValue
+                    imagePixelsPhase3[currentPixel.rightPix?.yPos ?? y][currentPixel.rightPix?.xPos ?? x + 1] = PixelColor.pink.rawValue
                     
                     // DELETE potentially bad intersection result
                     if currentPixel.rightPix?.bottomRightPix?.color == .black{
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels2[y][x] = PixelColor.pink.rawValue
+                        imagePixelsPhase3[y][x] = PixelColor.pink.rawValue
                     }
                     continue
                 }
@@ -280,7 +284,7 @@ class ParseImage{
                    currentPixel.neighbors.filter({$0.color == .black}).count >= 3{
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.teal.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.teal.rawValue
                 }
                 
                 /* RESTORE East Facing Pixels
@@ -301,7 +305,7 @@ class ParseImage{
                     
                      currentPixel.pixelStatus = .restoredRight
                      currentPixel.color = .black
-                     newImgPixels2[y][x] = PixelColor.green.rawValue
+                     imagePixelsPhase3[y][x] = PixelColor.green.rawValue
                     
                 } else if currentPixel.color == .white,
                     currentPixel.pixelStatus == .deleted,
@@ -316,7 +320,7 @@ class ParseImage{
                      
                     currentPixel.pixelStatus = .maybeRestoreRight
                     currentPixel.color = .white
-                    newImgPixels2[y][x] = PixelColor.gray.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.gray.rawValue
                     
                 } else if currentPixel.color == .black,
                    (currentPixel.pixelStatus == .normal ||
@@ -333,10 +337,10 @@ class ParseImage{
                     
                     currentPixel.leftPix?.pixelStatus = .restoredRight
                     currentPixel.leftPix?.color = .black
-                    newImgPixels2[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.green.rawValue
+                    imagePixelsPhase3[y][currentPixel.leftPix?.xPos ?? x - 1] = PixelColor.green.rawValue
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.orange.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.orange.rawValue
                     if currentPixel.bottomPix?.color == .black{
                         currentPixel.bottomPix?.pixelStatus = .maybeDeleteBottomLeft
                     }
@@ -359,7 +363,7 @@ class ParseImage{
 
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.darkBlue.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.darkBlue.rawValue
                 }
                 
                 /* DELETE Top Pixel Connector
@@ -379,7 +383,7 @@ class ParseImage{
 
                     currentPixel.color = .white
                     currentPixel.pixelStatus = .deleted
-                    newImgPixels2[y][x] = PixelColor.darkGreen.rawValue
+                    imagePixelsPhase3[y][x] = PixelColor.darkGreen.rawValue
                 }
                 
                 /* DELETE West Pixel Connector
@@ -411,7 +415,7 @@ class ParseImage{
                         
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels2[y][x] = PixelColor.lightGreen.rawValue
+                        imagePixelsPhase3[y][x] = PixelColor.lightGreen.rawValue
                     }
                     
                     if currentPixel.bottomRightPix?.color == .white,
@@ -453,7 +457,7 @@ class ParseImage{
                         
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels2[y][x] = PixelColor.darkGreen.rawValue
+                        imagePixelsPhase3[y][x] = PixelColor.darkGreen.rawValue
                         
                     } else if currentPixel.bottomRightPix?.color == .white,
                               currentPixel.bottomPix?.color == .black,
@@ -485,26 +489,22 @@ class ParseImage{
                        intsectingNeighbors.filter({$0.pixelStatus == .restoredRight}).count < 2{
                         currentPixel.color = .white
                         currentPixel.pixelStatus = .deleted
-                        newImgPixels2[y][x] = PixelColor.gold.rawValue
+                        imagePixelsPhase3[y][x] = PixelColor.gold.rawValue
                         for pixel in intsectingNeighbors{
                             pixel.color = .white
                             currentPixel.pixelStatus = .permanentlyDeleted
-                            newImgPixels2[pixel.yPos][pixel.xPos] = PixelColor.grayBlue.rawValue
+                            imagePixelsPhase3[pixel.yPos][pixel.xPos] = PixelColor.grayBlue.rawValue
                         }
                     }
                 }
             }
         }
 
-        for y in 0 ..< newImgPixels3.count {
-            for x in 0 ..< newImgPixels3[y].count{
+        //MARK: - PHASE 4 - Process all vectors and mapped them to their appropriate quadrants.
+        for y in 0 ..< imagePixelsPhase4.count {
+            for x in 0 ..< imagePixelsPhase4[y].count{
                 guard let currentPixel = pixelsImageMap["\(x)-\(y)"] else {
                     return .failure(.unableToParseImage("Unable to access Image Pixel Dictionary"))}
-                if (currentPixel.whitePixelNeigbors == 8 &&
-                        currentPixel.color == .white) ||
-                    (currentPixel.pixelStatus == .processed) {
-                    continue
-                }
                 //Process Pixels into Vectors
                 if currentPixel.color == .black,
                    currentPixel.hasAtLeastOneNeighborProcessed() == nil,
@@ -513,11 +513,11 @@ class ParseImage{
                     let vector = PixelVector()
                     vector.startPixel = currentPixel
                     currentPixel.pixelStatus = .processed
-                    newImgPixels3[y][x] = PixelColor.purple.rawValue
-                    processLine(pixelImage: currentPixel, line: vector, &newImgPixels3)
+                    imagePixelsPhase4[y][x] = PixelColor.purple.rawValue
+                    processLine(pixelImage: currentPixel, line: vector, &imagePixelsPhase4)
                     let lastPixel = vector.pixelPath.last
                     vector.endPixel = lastPixel
-                    newImgPixels3[lastPixel?.yPos ?? 0][lastPixel?.xPos ?? 0] = PixelColor.blue.rawValue
+                    imagePixelsPhase4[lastPixel?.yPos ?? 0][lastPixel?.xPos ?? 0] = PixelColor.blue.rawValue
                     if vector.pixelPath.count > 6{
                         vectors.append(vector)
                     }
@@ -526,6 +526,34 @@ class ParseImage{
             }
         }
         
+        //MARK: - MAP vectors and quadrants together.
+        let quadrantRanges = generateQuadrants(degreeOfSignatureAccuracy).0
+        let quadrants = generateQuadrants(degreeOfSignatureAccuracy).1
+        for vector in vectors{
+            if let quadrantRangeIndex = quadrantRanges.firstIndex(where: {$0.contains(vector.angle)}){
+                let quadrant = quadrants[quadrantRangeIndex]
+                quadrantDictionary[quadrant] = (quadrantDictionary[quadrant] ?? 0) + 1
+            }
+        }
+        
+        //MARK: - Debug Info
+        let interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
+        let seconds = (String(format: "%.4f", interval))
+        debugPrint("Total Seconds Taken to Parse Image: \(seconds)")
+        
+        if runInDebugMode{
+            parsedImageObj.debugImageDic[.phase1] = generateDebugImage(pixelArray: imagePixelsPhase1, cgImage: cgImage)
+            parsedImageObj.debugImageDic[.phase2] = generateDebugImage(pixelArray: imagePixelsPhase2, cgImage: cgImage)
+            parsedImageObj.debugImageDic[.phase3] = generateDebugImage(pixelArray: imagePixelsPhase3, cgImage: cgImage)
+            parsedImageObj.debugImageDic[.phase4] = generateDebugImage(pixelArray: imagePixelsPhase4, cgImage: cgImage)
+        }
+        
+        return .success(parsedImageObj)
+    }
+    
+    
+    //MARK: - Functions
+    func generateQuadrants(_ degreeOfSignatureAccuracy: SignatureAccuracy) -> ([Range<Double>], [VectorQuadtrant]){
         let quadrantDegrees = 180.0 / degreeOfSignatureAccuracy.rawValue
         var quadrantRanges: [Range<Double>] = []
         var quadrants: [VectorQuadtrant] = []
@@ -600,45 +628,36 @@ class ParseImage{
             quadrantRanges.append(q6Range)
             quadrants.append(VectorQuadtrant.q6)
         }
+        return (quadrantRanges, quadrants)
+    }
+    
+    func generateDebugImage(pixelArray: [[UInt32]], cgImage: CGImage) -> UIImage?{
+        let imageData = pixelArray.flatMap({$0})
+        let width = Int(cgImage.width)
+        let height = Int(cgImage.height)
+        let bitsPerComponent = 8
+        let bytesPerPixel2 = 4
+        let bytesPerRow = width * bytesPerPixel2
+        let imageDataMemoryAllocation = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
+        let colorSpace = CGColorSpaceCreateDeviceRGB()
+        var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
+        bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
 
-        for vector in vectors{
-            if let quadrantRangeIndex = quadrantRanges.firstIndex(where: {$0.contains(vector.angle)}){
-                let quadrant = quadrants[quadrantRangeIndex]
-                quadrantDictionary[quadrant] = (quadrantDictionary[quadrant] ?? 0) + 1
-            }
+        guard let imageContext = CGContext(data: imageDataMemoryAllocation,
+                                           width: width,
+                                           height: height,
+                                           bitsPerComponent: bitsPerComponent,
+                                           bytesPerRow: bytesPerRow,
+                                           space: colorSpace,
+                                           bitmapInfo: bitmapInfo),
+              let buffer = imageContext.data?.bindMemory(to: UInt32.self,
+                                                         capacity: imageData.count)
+        else { return nil}
+
+        for index in 0 ..< width * height {
+            buffer[index] = imageData[index]
         }
-        
-        
-        if runInDebugMode{
-            let imageData = newImgPixels3.flatMap({$0})
-            let width = Int(cgImage.width)
-            let height = Int(cgImage.height)
-            let bitsPerComponent = 8
-            let bytesPerPixel2 = 4
-            let bytesPerRow = width * bytesPerPixel2
-            let imageDataMemoryAllocation = UnsafeMutablePointer<Pixel>.allocate(capacity: width * height)
-            let colorSpace = CGColorSpaceCreateDeviceRGB()
-            var bitmapInfo: UInt32 = CGBitmapInfo.byteOrder32Little.rawValue
-            bitmapInfo |= CGImageAlphaInfo.premultipliedLast.rawValue & CGBitmapInfo.alphaInfoMask.rawValue
-
-            guard let imageContext = CGContext(data: imageDataMemoryAllocation,
-                                               width: width,
-                                               height: height,
-                                               bitsPerComponent: bitsPerComponent,
-                                               bytesPerRow: bytesPerRow,
-                                               space: colorSpace,
-                                               bitmapInfo: bitmapInfo),
-                  let buffer = imageContext.data?.bindMemory(to: UInt32.self, capacity: imageData.count) else {
-                return .failure(.unableToParseImage("Unable to create an image context to convert 2D image pixels into a UIImage."))}
-
-            for index in 0 ..< width * height {
-                buffer[index] = imageData[index]
-            }
-            imageDataObj.debugModeImage = imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
-            return .success(imageDataObj)
-        }
-        
-        return .failure(.unknownError("Unknown Error Occured."))
+        return imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
     }
     
     func processLine(pixelImage: ImagePixel?, line: PixelVector, _ imgPixels: inout [[UInt32]]){
@@ -793,13 +812,12 @@ class PixelVector{
                 firstPixel = endPixel
                 secondPixel = startPixel
             }
-            
             angle = atan((Double(secondPixel.yPos) - Double(firstPixel.yPos)) / (Double(secondPixel.xPos) - Double(firstPixel.xPos))) * (180 / Double.pi)
             print("Angle: \(angle)")
         }
     }
     var pixelPath: [ImagePixel] = []
-    var angle: Double!
+    var angle: Double = 0.0
     
 }
 
@@ -916,10 +934,23 @@ class ImagePixel{
     }
 }
 
+
+
+
+
+
+
 class ParsedImageObj {
     var quadrants: [VectorQuadtrant:Int] = [:]
     var nonBreakingErrorMessages: [String] = []
-    var debugModeImage: UIImage?
+    var debugImageDic: [DebugImageName: UIImage] = [:]
+}
+
+enum DebugImageName: String{
+    case phase1 = "PHASE: 1 - Black White Image"
+    case phase2 = "PHASE: 2 - Trimmed Image"
+    case phase3 = "PHASE: 3 - Altered Image"
+    case phase4 = "PHASE: 4 - Processed Image"
 }
 
 enum VectorQuadtrant: Int{
