@@ -29,6 +29,9 @@ class TestSignatureVC: UIViewController {
     @IBOutlet weak var centerView: UIView!
     @IBOutlet weak var centerViewOffsetConstraint: NSLayoutConstraint!
     
+    var compareComplete = false
+    var debugImages: [DebugImageName] = []
+    
     override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -70,8 +73,21 @@ class TestSignatureVC: UIViewController {
         let translation = gesture.translation(in: view)
         if translation.y < 250 && translation.y > -250{
             centerViewOffsetConstraint.constant = translation.y
-            
         }
+    }
+    
+    @objc func didTapOnDebugImg(_ sender: UITapGestureRecognizer){
+        if compareComplete{
+            let sourceView = sender.view?.convert(sender.view?.bounds ?? self.view.bounds, to: self.view)
+            let dropdown = DropDownView(sourceView: sourceView, customCellName: "", direction: sender.tag == 0 ? .ArrowDown : .ArrowUp, maxWidth: 150, maxHeight: 39 * CGFloat(debugImages.count), xOffset: nil, yOffset: nil, arrowOffset: nil, bgColor: .DarkBlue(), cornerRadias: 12, autoDismiss: true, addShadow: true, borderWidth: nil, borderColor: nil, addCellSeparator: nil)
+            dropdown.delegate = self
+            dropdown.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
+            dropdown.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
+            self.present(dropdown, animated: false, completion: nil)
+        } else{
+            showAlert(message: "There are no signatures to view yet.")
+        }
+
     }
     
     func parseImg(for img: UIImage?) {
@@ -209,4 +225,43 @@ extension TestSignatureVC: UIScrollViewDelegate{
         return nil
     }
     
+}
+
+//MARK: - Drop Down Delegate
+extension TestSignatureVC : DropDownDelegate{
+    
+    func tableViewPopup(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+//        return sortList.count
+    }
+    
+    func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = UITableViewCell()
+        let sortItem = sortList[indexPath.row]
+        if sortItem == currentSortOption{
+            cell.textLabel?.textColor = .YellowLime()
+        } else {
+            cell.textLabel?.textColor = .white
+        }
+        cell.contentView.backgroundColor = .DarkBlue()
+        cell.textLabel?.text = sortItem.rawValue.capitalized
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 13)
+        cell.textLabel?.textAlignment = .left
+        return cell
+    }
+    
+    func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+//        currentSortOption = sortList[indexPath.row]
+//        setSortOption()
+    }
+    
+    func tableViewPopup(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 39
+    }
+    
+    func popupDismissed() {
+        UIView.animate(withDuration: 0.1) {
+//            self.navBar.imgSort.tintColor = .white
+//            self.navBar.lblSort.textColor = .white
+        }
+    }
 }

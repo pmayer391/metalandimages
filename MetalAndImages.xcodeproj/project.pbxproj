@@ -23,6 +23,8 @@
 		2DC7FA0026CA9D38003DE231 /* SignatureDriver.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DC7F9FF26CA9D38003DE231 /* SignatureDriver.swift */; };
 		2DCA488C265C615B002AD813 /* SignatureVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DCA488B265C615B002AD813 /* SignatureVC.swift */; };
 		2DD670A426D20A4600D78471 /* CanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DD670A326D20A4600D78471 /* CanvasView.swift */; };
+		2DE0ECF926D286FE008AE482 /* DropDownView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE0ECF826D286FE008AE482 /* DropDownView.swift */; };
+		2DE0ECFB26D2875F008AE482 /* CBImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE0ECFA26D2875F008AE482 /* CBImageView.swift */; };
 		2DE6262D26AA6DB00096EBC1 /* TestSignatureVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */; };
 /* End PBXBuildFile section */
 
@@ -66,6 +68,8 @@
 		2DC7F9FF26CA9D38003DE231 /* SignatureDriver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureDriver.swift; sourceTree = "<group>"; };
 		2DCA488B265C615B002AD813 /* SignatureVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureVC.swift; sourceTree = "<group>"; };
 		2DD670A326D20A4600D78471 /* CanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CanvasView.swift; sourceTree = "<group>"; };
+		2DE0ECF826D286FE008AE482 /* DropDownView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DropDownView.swift; sourceTree = "<group>"; };
+		2DE0ECFA26D2875F008AE482 /* CBImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CBImageView.swift; sourceTree = "<group>"; };
 		2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestSignatureVC.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -117,6 +121,7 @@
 		2DA573FA264992F60086820F /* MetalAndImages */ = {
 			isa = PBXGroup;
 			children = (
+				2DE0ECF826D286FE008AE482 /* DropDownView.swift */,
 				2DCA488B265C615B002AD813 /* SignatureVC.swift */,
 				2DA574352649B62F0086820F /* MetalFiles */,
 				2DA573FF264992F60086820F /* ViewController.swift */,
@@ -130,6 +135,7 @@
 				2DA57409264992F60086820F /* Info.plist */,
 				2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */,
 				2DD670A326D20A4600D78471 /* CanvasView.swift */,
+				2DE0ECFA26D2875F008AE482 /* CBImageView.swift */,
 			);
 			path = MetalAndImages;
 			sourceTree = "<group>";
@@ -297,8 +303,10 @@
 				2DA57400264992F60086820F /* ViewController.swift in Sources */,
 				2DE6262D26AA6DB00096EBC1 /* TestSignatureVC.swift in Sources */,
 				2DD670A426D20A4600D78471 /* CanvasView.swift in Sources */,
+				2DE0ECFB26D2875F008AE482 /* CBImageView.swift in Sources */,
 				2DA574372649B6400086820F /* Filter.swift in Sources */,
 				2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */,
+				2DE0ECF926D286FE008AE482 /* DropDownView.swift in Sources */,
 				2DA573FC264992F60086820F /* AppDelegate.swift in Sources */,
 				2DA574302649968A0086820F /* CustomCell.swift in Sources */,
 				2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */,
