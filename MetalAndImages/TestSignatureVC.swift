@@ -14,7 +14,6 @@ class TestSignatureVC: UIViewController {
     @IBOutlet weak var imgScrollView: UIScrollView!
     @IBOutlet weak var lblSignHere: UILabel!
     @IBOutlet weak var loader: UIActivityIndicatorView!
-    
 
     @IBOutlet weak var secondarySignatureView: CanvasView!
     @IBOutlet weak var secondaryImgView: UIImageView!
@@ -22,15 +21,18 @@ class TestSignatureVC: UIViewController {
     @IBOutlet weak var secondaryLblSignHere: UILabel!
     @IBOutlet weak var secondaryLoader: UIActivityIndicatorView!
 
-    
     @IBOutlet weak var btnSaveImg: UIButton!
     @IBOutlet weak var btnGetImg: UIButton!
     @IBOutlet weak var btnCompare: UIButton!
     @IBOutlet weak var centerView: UIView!
     @IBOutlet weak var centerViewOffsetConstraint: NSLayoutConstraint!
     
-    var compareComplete = false
+    var comparePressed = false
     var debugImages: [DebugImageName] = []
+    var currentTopParsedImgObj: ParsedImageObj?
+    var currentTopDebugImg: DebugImageName?
+    var currentBottomParsedImgObj: ParsedImageObj?
+    var currentBottomDebugImg: DebugImageName?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -38,7 +40,6 @@ class TestSignatureVC: UIViewController {
         signatureView.drawColor = .black
         signatureView.drawWidth = 1
         signatureView.delegate = self
-        
         secondarySignatureView.drawColor = .black
         secondarySignatureView.drawWidth = 3
         secondarySignatureView.delegate = self
@@ -47,13 +48,11 @@ class TestSignatureVC: UIViewController {
         imgScrollView.minimumZoomScale = 1.0
         imgScrollView.maximumZoomScale = 1000.0
         imgScrollView.tag = 0
-        
-//        btnDone.layer.cornerRadius = 10
-//        secondaryBtnDone.layer.cornerRadius = 10
-//        btnSelectImg.layer.cornerRadius = 10
-//        secondaryBtnSelectImg.layer.cornerRadius = 10
-        centerView.layer.cornerRadius = 10
-        btnCompare.layer.cornerRadius = 12
+        imgScrollView.isMultipleTouchEnabled = true
+        secondaryImgScrollView.delegate = self
+        secondaryImgScrollView.minimumZoomScale = 1.0
+        secondaryImgScrollView.maximumZoomScale = 1000.0
+        secondaryImgScrollView.tag = 1
         
         loader.isHidden = true
         loader.style = .large
@@ -62,11 +61,15 @@ class TestSignatureVC: UIViewController {
         
         let dragGesture = UIPanGestureRecognizer(target: self, action: #selector(didPanMiddleView(_:)))
         centerView.addGestureRecognizer(dragGesture)
+        let tapGesture = UITapGestureRecognizer(target: self, action: #selector(didTapOnDebugImg(_:)))
+        let tapGesture2 = UITapGestureRecognizer(target: self, action: #selector(didTapOnDebugImg(_:)))
+        imgView.isUserInteractionEnabled = true
+        imgView.addGestureRecognizer(tapGesture)
+        secondaryImgView.isUserInteractionEnabled = true
+        secondaryImgView.addGestureRecognizer(tapGesture2)
         
-//        originalScrollView.delegate = self
-//        originalScrollView.minimumZoomScale = 1.0
-//        originalScrollView.maximumZoomScale = 1000.0
-//        originalScrollView.tag = 1
+        centerView.layer.cornerRadius = 10
+        btnCompare.layer.cornerRadius = 12
     }
     
     @objc func didPanMiddleView(_ gesture: UIPanGestureRecognizer){
@@ -77,9 +80,17 @@ class TestSignatureVC: UIViewController {
     }
     
     @objc func didTapOnDebugImg(_ sender: UITapGestureRecognizer){
-        if compareComplete{
-            let sourceView = sender.view?.convert(sender.view?.bounds ?? self.view.bounds, to: self.view)
-            let dropdown = DropDownView(sourceView: sourceView, customCellName: "", direction: sender.tag == 0 ? .ArrowDown : .ArrowUp, maxWidth: 150, maxHeight: 39 * CGFloat(debugImages.count), xOffset: nil, yOffset: nil, arrowOffset: nil, bgColor: .DarkBlue(), cornerRadias: 12, autoDismiss: true, addShadow: true, borderWidth: nil, borderColor: nil, addCellSeparator: nil)
+        if comparePressed{
+            debugImages = []
+            if sender.view?.tag == 0{
+                let debubImgTemp = currentTopParsedImgObj?.debugImageDic.map({$0.key}) ?? []
+                debugImages = debubImgTemp.sorted(by: {$0.rawValue > $1.rawValue})
+            } else {
+                let debubImgTemp = currentBottomParsedImgObj?.debugImageDic.map({$0.key}) ?? []
+                debugImages = debubImgTemp.sorted(by: {$0.rawValue > $1.rawValue})
+            }
+            let sourceView = sender.view?.convert(sender.view?.bounds ?? self.view.bounds, to: self.view) ?? CGRect()
+            let dropdown = DropDownView(sourceView: sourceView, customCellName: "", direction: (sender.view?.tag == 0 ? .ArrowDown : .ArrowUp), maxWidth: 200, maxHeight: 39 * CGFloat(debugImages.count), xOffset: nil, yOffset: nil, arrowOffset: nil, bgColor: UIColor.DarkBlue(), cornerRadias: 12, autoDismiss: true, addShadow: true, borderWidth: nil, borderColor: nil, addCellSeparator: nil, tag: (sender.view?.tag == 0 ? 0 : 1))
             dropdown.delegate = self
             dropdown.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
             dropdown.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -116,8 +127,8 @@ class TestSignatureVC: UIViewController {
     }
     
     @IBAction func btnCompare(_ sender: UIButton) {
-        UIView.animate(withDuration: 0.15) {
-            if self.signatureView.image != nil && self.secondarySignatureView.image != nil{
+//        UIView.animate(withDuration: 0.15) {
+            if let sourceImg = self.signatureView.image, let secondaryImg =  self.secondarySignatureView.image{
                 sender.isEnabled = false
                 self.signatureView.clearImage()
                 self.loader.isHidden = false
@@ -127,17 +138,14 @@ class TestSignatureVC: UIViewController {
                 self.secondaryLoader.isHidden = false
                 self.secondaryLoader.startAnimating()
                 self.secondarySignatureView.isUserInteractionEnabled = false
+                self.comparePressed = true
+                SignatureDriver.compareSignatures(sourceImg, secondaryImg, .standard, true) { percentage, error in
+                    print("Here")
+                }
             } else{
                 self.showAlert(message: "There must be two signatures to use the compare feature.")
             }
-
-//            do {
-//                try self.parseImg(for: self.signatureView.image)
-//            } catch {
-//                debugPrint("\(exception()): Unable to retrieve debug image.")
-//            }
-//
-        }
+//        }
     }
     
     @IBAction func btnDoneSigning(_ sender: UIButton) {
@@ -203,10 +211,6 @@ extension TestSignatureVC: CanvasViewDelegate{
         }
     }
     
-    func signatureStarted() {
-
-    }
-    
     func signatureEnded() {
         if signatureView.image != nil && imgView.image != nil{
 
@@ -219,39 +223,44 @@ extension TestSignatureVC: UIScrollViewDelegate{
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         if scrollView.tag == 0{
             return imgView
-        } else{
-//            return imgOriginal
+        } else if scrollView.tag == 1{
+            return secondaryImgView
         }
         return nil
     }
-    
 }
 
 //MARK: - Drop Down Delegate
 extension TestSignatureVC : DropDownDelegate{
     
-    func tableViewPopup(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-//        return sortList.count
+    func tableViewPopup(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int{
+        return debugImages.count
     }
     
     func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = UITableViewCell()
-        let sortItem = sortList[indexPath.row]
-        if sortItem == currentSortOption{
+        let debugImage = debugImages[indexPath.row]
+        if debugImage == currentTopDebugImg || debugImage == currentBottomDebugImg{
             cell.textLabel?.textColor = .YellowLime()
         } else {
             cell.textLabel?.textColor = .white
         }
         cell.contentView.backgroundColor = .DarkBlue()
-        cell.textLabel?.text = sortItem.rawValue.capitalized
+        cell.textLabel?.text = debugImage.rawValue.capitalized
         cell.textLabel?.font = UIFont.systemFont(ofSize: 13)
         cell.textLabel?.textAlignment = .left
         return cell
     }
     
     func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-//        currentSortOption = sortList[indexPath.row]
-//        setSortOption()
+        let debugImg = debugImages[indexPath.row]
+        if tableView.tag == 0 {
+            currentTopDebugImg = debugImg
+            imgView.image = currentTopParsedImgObj?.debugImageDic[debugImg]
+        } else{
+            currentBottomDebugImg = debugImg
+            secondaryImgView.image = currentBottomParsedImgObj?.debugImageDic[debugImg]
+        }
     }
     
     func tableViewPopup(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {

@@ -65,7 +65,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
     }
     
     // MARK: - Initializers
-    init(sourceView: CGRect, customCellName: String?, direction: Direction?, maxWidth: CGFloat?, maxHeight: CGFloat?, xOffset: CGFloat?, yOffset: CGFloat?, arrowOffset: CGFloat?, bgColor: UIColor?, cornerRadias: CGFloat?, autoDismiss: Bool?, addShadow:Bool?, borderWidth: CGFloat?, borderColor: UIColor?, addCellSeparator: Bool?){
+    init(sourceView: CGRect, customCellName: String?, direction: Direction?, maxWidth: CGFloat?, maxHeight: CGFloat?, xOffset: CGFloat?, yOffset: CGFloat?, arrowOffset: CGFloat?, bgColor: UIColor?, cornerRadias: CGFloat?, autoDismiss: Bool?, addShadow:Bool?, borderWidth: CGFloat?, borderColor: UIColor?, addCellSeparator: Bool?, tag: Int?){
         self.sourceRec = sourceView
         self.customCellName = customCellName ?? ""
         self.tvDirection = direction ?? .Down
@@ -84,6 +84,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
         self.addCellSeparator = addCellSeparator ?? true
         self.tvSize = CGSize(width: tvMaxWidth, height: tvMaxHeight)
         self.tvPopUp = UITableView(frame: CGRect(x: 0, y: 0, width: 0, height: 0), style: .grouped)
+        self.tvPopUp.tag = tag ?? 0
         super.init(nibName: nil, bundle: nil)
     }
     

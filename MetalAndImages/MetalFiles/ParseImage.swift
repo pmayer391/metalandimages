@@ -19,7 +19,7 @@ class ParseImage{
         inputImage: UIImage,
         runInDebugMode: Bool = false,
         degreeOfSignatureAccuracy: SignatureAccuracy = .severe
-    ) -> Result<ParsedImageObj, ImageParserError>{
+    ) -> Result<ParsedImageObj>{
         
         //MARK: - INIT VARS
         let startTiming = CFAbsoluteTimeGetCurrent()
@@ -535,6 +535,7 @@ class ParseImage{
                 quadrantDictionary[quadrant] = (quadrantDictionary[quadrant] ?? 0) + 1
             }
         }
+        parsedImageObj.quadrants = quadrantDictionary
         
         //MARK: - Debug Info
         let interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
@@ -813,7 +814,6 @@ class PixelVector{
                 secondPixel = startPixel
             }
             angle = atan((Double(secondPixel.yPos) - Double(firstPixel.yPos)) / (Double(secondPixel.xPos) - Double(firstPixel.xPos))) * (180 / Double.pi)
-            print("Angle: \(angle)")
         }
     }
     var pixelPath: [ImagePixel] = []
@@ -1009,6 +1009,11 @@ public enum ImageParserError: Error {
     case unableToParseImage(String)
     case invalidSignature(String)
     case unknownError(String)
+}
+
+enum Result<Value> {
+    case success(Value)
+    case failure(ImageParserError)
 }
 
 

@@ -12,20 +12,49 @@ import UIKit
 public class SignatureDriver {
     
     
-    class public func compareSignatures(_ primarySignature: UIImage,_ secondarySignature: UIImage,_ accuracy: SignatureAccuracy = .standard, handler: @escaping (Double?, ImageParserError?) -> Void) {
+    class public func compareSignatures(_ primarySignature: UIImage,
+                                        _ secondarySignature: UIImage,
+                                        _ accuracy: SignatureAccuracy = .standard,
+                                        _ isDebugMode: Bool = false,
+                                        _ handler: @escaping (Double?, String?) -> Void) {
         
-//        let parsedPrimaryIm
-        let parseImgQueue = OperationQueue()
+        let operationQueue = OperationQueue()
+        operationQueue.maxConcurrentOperationCount = 2
+        var primaryImgObj: ParsedImageObj?
+        var secondaryImgObj: ParsedImageObj?
            
-        parseImgQueue.addOperation {
-            let imgParser = ParseImage()
-            let parsedPrimaryImg = imgParser.parseImage(inputImage: primarySignature)
+        DispatchQueue.global().async {
+            let primaryBlock = BlockOperation{
+                let imgParser = ParseImage()
+                let result = imgParser.parseImage(inputImage: primarySignature,
+                                                            runInDebugMode: isDebugMode,
+                                                            degreeOfSignatureAccuracy: accuracy)
+                switch result {
+                case .success(let data):
+                    primaryImgObj = data
+                case .failure(let error):
+                    debugPrint("Failure: \(error)")
+                }
+            }
+            
+            let secondaryBlock = BlockOperation{
+                let imgParser = ParseImage()
+                let result = imgParser.parseImage(inputImage: secondarySignature,
+                                                            runInDebugMode: isDebugMode,
+                                                            degreeOfSignatureAccuracy: accuracy)
+                switch result {
+                case .success(let data):
+                    secondaryImgObj = data
+                case .failure(let error):
+                    debugPrint("Failure: \(error)")
+                }
+            }
+            
+            operationQueue.addOperations([primaryBlock, secondaryBlock], waitUntilFinished: true)
+            print("All Done")
+            print("Image 1 Obj: \(primaryImgObj)")
+            print("Image 2 Obj: \(secondaryImgObj)")
         }
-        parseImgQueue.addOperation {
-            let imgParser = ParseImage()
-            let parsedSecondaryImg = imgParser.parseImage(inputImage: primarySignature)
-        }
-        parseImgQueue.waitUntilAllOperationsAreFinished()
         
         
         
