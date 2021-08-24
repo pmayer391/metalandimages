@@ -29,9 +29,9 @@ class TestSignatureVC: UIViewController {
     
     var comparePressed = false
     var debugImages: [DebugImageName] = []
-    var currentTopParsedImgObj: ParsedImageObj?
+    var currentTopParsedImgObj: ParsedImage?
     var currentTopDebugImg: DebugImageName?
-    var currentBottomParsedImgObj: ParsedImageObj?
+    var currentBottomParsedImgObj: ParsedImage?
     var currentBottomDebugImg: DebugImageName?
     
     override func viewDidLoad() {
@@ -90,7 +90,22 @@ class TestSignatureVC: UIViewController {
                 debugImages = debubImgTemp.sorted(by: {$0.rawValue > $1.rawValue})
             }
             let sourceView = sender.view?.convert(sender.view?.bounds ?? self.view.bounds, to: self.view) ?? CGRect()
-            let dropdown = DropDownView(sourceView: sourceView, customCellName: "", direction: (sender.view?.tag == 0 ? .ArrowDown : .ArrowUp), maxWidth: 200, maxHeight: 39 * CGFloat(debugImages.count), xOffset: nil, yOffset: nil, arrowOffset: nil, bgColor: UIColor.DarkBlue(), cornerRadias: 12, autoDismiss: true, addShadow: true, borderWidth: nil, borderColor: nil, addCellSeparator: nil, tag: (sender.view?.tag == 0 ? 0 : 1))
+            let dropdown = DropDownView(sourceView: sourceView,
+                                        customCellName: "",
+                                        direction: (sender.view?.tag == 0 ? .ArrowDown : .ArrowUp),
+                                        maxWidth: 200,
+                                        maxHeight: 39 * CGFloat(debugImages.count),
+                                        xOffset: nil,
+                                        yOffset: nil,
+                                        arrowOffset: nil,
+                                        bgColor: UIColor.DarkBlue(),
+                                        cornerRadias: 12,
+                                        autoDismiss: true,
+                                        addShadow: true,
+                                        borderWidth: nil,
+                                        borderColor: nil,
+                                        addCellSeparator: nil,
+                                        tag: (sender.view?.tag == 0 ? 0 : 1))
             dropdown.delegate = self
             dropdown.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
             dropdown.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -127,7 +142,7 @@ class TestSignatureVC: UIViewController {
     }
     
     @IBAction func btnCompare(_ sender: UIButton) {
-//        UIView.animate(withDuration: 0.15) {
+        UIView.animate(withDuration: 0.15) {
             if let sourceImg = self.signatureView.image, let secondaryImg =  self.secondarySignatureView.image{
                 sender.isEnabled = false
                 self.signatureView.clearImage()
@@ -139,13 +154,37 @@ class TestSignatureVC: UIViewController {
                 self.secondaryLoader.startAnimating()
                 self.secondarySignatureView.isUserInteractionEnabled = false
                 self.comparePressed = true
-                SignatureDriver.compareSignatures(sourceImg, secondaryImg, .standard, true) { percentage, error in
-                    print("Here")
+                SignatureDriver.compareSignatures(sourceImg,
+                                                  secondaryImg,
+                                                  .standard,
+                                                  true) { (percentage,
+                                                           error,
+                                                           parsedImgObjects) in
+                    
+                    DispatchQueue.main.async {
+                        if let parsedImgs = parsedImgObjects, parsedImgs.count > 0, let percent = percentage{
+                            sender.isEnabled = true
+                            self.loader.isHidden = true
+                            self.loader.stopAnimating()
+                            self.signatureView.isUserInteractionEnabled = true
+                            self.secondaryLoader.isHidden = true
+                            self.secondaryLoader.stopAnimating()
+                            self.secondarySignatureView.isUserInteractionEnabled = true
+                            self.comparePressed = false
+                            self.currentTopParsedImgObj = parsedImgs.first
+                            self.currentBottomParsedImgObj = parsedImgs.last
+                            self.showAlert(message: "Signatures are \(percent)% Matching")
+                        } else if let error = error{
+                            self.showAlert(message: error)
+                        } else {
+                            self.showAlert(message: "Unknown Result Occurred")
+                        }
+                    }
                 }
             } else{
                 self.showAlert(message: "There must be two signatures to use the compare feature.")
             }
-//        }
+        }
     }
     
     @IBAction func btnDoneSigning(_ sender: UIButton) {

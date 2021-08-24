@@ -18,8 +18,8 @@ class ParseImage{
     func parseImage(
         inputImage: UIImage,
         runInDebugMode: Bool = false,
-        degreeOfSignatureAccuracy: SignatureAccuracy = .severe
-    ) -> Result<ParsedImageObj>{
+        degreeOfSignatureAccuracy: SignatureAccuracy = .standard
+    ) -> Result<ParsedImage>{
         
         //MARK: - INIT VARS
         let startTiming = CFAbsoluteTimeGetCurrent()
@@ -36,7 +36,7 @@ class ParseImage{
                 count: cgImage.width),
             count: cgImage.height)
         var pixelsImageMap: [String:ImagePixel] = [:]
-        let parsedImageObj = ParsedImageObj()
+        let parsedImageObj = ParsedImage()
         var imagePixelsPhase2 = imagePixelsPhase1
         var imagePixelsPhase3 = imagePixelsPhase2
         var imagePixelsPhase4 = imagePixelsPhase3
@@ -61,7 +61,7 @@ class ParseImage{
             }
         }
 
-        //MARK: - PHASE 1 - Converts image to black and white image only.
+        //MARK: - PHASE 1 - Converts image to black and white pixels only.
         if cgImage.colorSpace?.model == .rgb || cgImage.colorSpace?.model == .monochrome{
             let bytesPerPixel = cgImage.bitsPerPixel / cgImage.bitsPerComponent
             for y in 0 ..< cgImage.height {
@@ -591,7 +591,7 @@ class ParseImage{
             let q3Range: Range<Double>  = q4Min..<q2Min
             quadrantRanges.append(q3Range)
             quadrants.append(VectorQuadtrant.q3)
-        case .strict:
+        case .stern:
             let q2Min = q1PosMin - quadrantDegrees
             let q2Range: Range<Double> = q2Min..<q1PosMin
             quadrantRanges.append(q2Range)
@@ -608,7 +608,7 @@ class ParseImage{
             let q4Range: Range<Double> = q5Min..<q4Min
             quadrantRanges.append(q4Range)
             quadrants.append(VectorQuadtrant.q4)
-        case .severe:
+        case .strict:
             let q2Min = q1PosMin - quadrantDegrees
             let q2Range: Range<Double> = q2Min..<q1PosMin
             quadrantRanges.append(q2Range)
@@ -780,6 +780,15 @@ class ParseImage{
     }
 }
 
+
+
+
+
+
+
+
+
+
 struct Pixel {
     var value: UInt32
     var red: UInt8 {
@@ -940,9 +949,9 @@ class ImagePixel{
 
 
 
-class ParsedImageObj {
+public class ParsedImage {
     var quadrants: [VectorQuadtrant:Int] = [:]
-    var nonBreakingErrorMessages: [String] = []
+    var silentErrors: [String] = []
     var debugImageDic: [DebugImageName: UIImage] = [:]
 }
 
@@ -1000,15 +1009,13 @@ enum PixelColor: UInt32{
 public enum SignatureAccuracy: Double{
     case relaxed = 3
     case standard = 4
-    case strict = 5
-    case severe = 6
+    case stern = 5
+    case strict = 6
 }
 
 public enum ImageParserError: Error {
     case invalidImageSupplied(String)
     case unableToParseImage(String)
-    case invalidSignature(String)
-    case unknownError(String)
 }
 
 enum Result<Value> {

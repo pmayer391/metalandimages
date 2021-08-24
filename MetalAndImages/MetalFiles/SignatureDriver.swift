@@ -12,16 +12,37 @@ import UIKit
 public class SignatureDriver {
     
     
-    class public func compareSignatures(_ primarySignature: UIImage,
-                                        _ secondarySignature: UIImage,
-                                        _ accuracy: SignatureAccuracy = .standard,
-                                        _ isDebugMode: Bool = false,
-                                        _ handler: @escaping (Double?, String?) -> Void) {
+    public class func compareSignatures(_ primarySignature: UIImage,
+                                  _ secondarySignature: UIImage,
+                                  _ accuracy: SignatureAccuracy = .standard,
+                                  _ handler: @escaping (_ percentage: Double?,
+                                                        _ breakingError: String?,
+                                                        _ nonBreakingErrors: String?) -> Void) {
+        compareSignatures(primarySignature,
+                          secondarySignature,
+                          accuracy,
+                          false) { percentage,
+                                   breakingErrors,
+                                   parsedImageObjs in
+            
+            let silentErrors = parsedImageObjs.map({$0.map({$0.silentErrors.joined(separator: ",")}).joined(separator: "|")})
+            handler(percentage, breakingErrors, silentErrors)
+        }
+        
+    }
+    
+    class func compareSignatures(_ primarySignature: UIImage,
+                           _ secondarySignature: UIImage,
+                           _ accuracy: SignatureAccuracy = .standard,
+                           _ isDebugMode: Bool = false,
+                           _ handler: @escaping (_ percentage: Double?,
+                                                 _ breakingError: String?,
+                                                 _ imageObj: [ParsedImage]?) -> Void) {
         
         let operationQueue = OperationQueue()
         operationQueue.maxConcurrentOperationCount = 2
-        var primaryImgObj: ParsedImageObj?
-        var secondaryImgObj: ParsedImageObj?
+        var primaryImgObj: ParsedImage?
+        var secondaryImgObj: ParsedImage?
            
         DispatchQueue.global().async {
             let primaryBlock = BlockOperation{
@@ -33,7 +54,14 @@ public class SignatureDriver {
                 case .success(let data):
                     primaryImgObj = data
                 case .failure(let error):
-                    debugPrint("Failure: \(error)")
+                    switch error {
+                    case .invalidImageSupplied(let errorMessage):
+                        handler(nil, "INVALID PRIMARY IMAGE SUPPLIED: \(errorMessage)", nil)
+                        operationQueue.cancelAllOperations()
+                    case .unableToParseImage(let errorMessage):
+                        handler(nil,"PRIMARY IMAGE PARSING ERROR: \(errorMessage)", nil)
+                        operationQueue.cancelAllOperations()
+                    }
                 }
             }
             
@@ -46,19 +74,45 @@ public class SignatureDriver {
                 case .success(let data):
                     secondaryImgObj = data
                 case .failure(let error):
-                    debugPrint("Failure: \(error)")
+                    switch error {
+                    case .invalidImageSupplied(let errorMessage):
+                        handler(nil, "INVALID SECONDARY IMAGE SUPPLIED: \(errorMessage)", nil)
+                        operationQueue.cancelAllOperations()
+                    case .unableToParseImage(let errorMessage):
+                        handler(nil,"SECONDARY IMAGE PARSING ERROR: \(errorMessage)", nil)
+                        operationQueue.cancelAllOperations()
+                    }
                 }
             }
             
             operationQueue.addOperations([primaryBlock, secondaryBlock], waitUntilFinished: true)
-            print("All Done")
-            print("Image 1 Obj: \(primaryImgObj)")
-            print("Image 2 Obj: \(secondaryImgObj)")
+            
+            if let primaryImage = primaryImgObj, let secondaryImage = secondaryImgObj{
+                let quadrants = primaryImage.quadrants
+                var overallPercentage: Double = 0.0
+                for (key, primaryQuadrantCount) in quadrants{
+                    let secondQuadrantCount = secondaryImage.quadrants[key] ?? 0
+                    let pCount = primaryQuadrantCount == 0 ? 1 : primaryQuadrantCount
+                    let sCount = secondQuadrantCount == 0 ? 1 : secondQuadrantCount
+                    let quadrantPercentage = computePercentage(pCount, sCount)
+                    let overallQuadrantPercentage = (quadrantPercentage / Double(quadrants.count)) * 100
+                    overallPercentage = overallPercentage + overallQuadrantPercentage
+                }
+                handler(overallPercentage, nil, [primaryImage, secondaryImage])
+            } else {
+                handler(nil, "ERROR: Empty parsed image objects", nil)
+            }
         }
-        
-        
-        
-        return handler(nil, nil)
     }
+}
+
+private extension SignatureDriver{
     
+    class func computePercentage(_ first: Int, _ second: Int) -> Double{
+        if first >= second{
+            return Double(second) / Double(first)
+        } else {
+            return Double(first) / Double(second)
+        }
+    }
 }
