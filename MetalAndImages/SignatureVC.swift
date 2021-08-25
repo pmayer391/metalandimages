@@ -112,6 +112,10 @@ class SignatureVC: UIViewController {
 }
 
 extension SignatureVC: CanvasViewDelegate{
+    func signatureEnded(tag: Int) {
+        print("Blah")
+    }
+    
     func signatureStarted(tag: Int) {
         print("Huh")
     }

@@ -11,7 +11,7 @@ import UIKit
 
 protocol CanvasViewDelegate {
     func signatureStarted(tag: Int)
-    func signatureEnded()
+    func signatureEnded(tag: Int)
 }
 
 //MARK: - Canvas Class
@@ -53,13 +53,13 @@ class CanvasView : UIImageView {
         UIGraphicsEndImageContext()
         
         if let delegate = delegate {
-            delegate.signatureEnded()
+            delegate.signatureEnded(tag: self.tag)
         }
     }
     
     override func touchesEnded(_ touches: Set<UITouch>, with event: UIEvent?) {
         if let delegate = delegate {
-            delegate.signatureEnded()
+            delegate.signatureEnded(tag: self.tag)
         }
     }
     

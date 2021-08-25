@@ -27,7 +27,7 @@ extension UIColor {
     }
 
     class func DarkBlue() -> UIColor{
-        return UIColor(rgb: 0x191C4B)
+        return UIColor(rgb: 0x122272)
     }
     
     class func YellowLime() -> UIColor{

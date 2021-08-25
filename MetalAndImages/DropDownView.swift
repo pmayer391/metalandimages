@@ -11,8 +11,8 @@ import UIKit
 
 protocol DropDownDelegate{
     func tableViewPopup(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int
-    func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell
-    func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath)
+    func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath, tag: Int) -> UITableViewCell
+    func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath, tag: Int)
     func tableViewPopup(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat
     func popupDismissed()
 }
@@ -35,6 +35,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
     private var tvBorderWidth: CGFloat!
     private var tvBorderColor: UIColor!
     private var addCellSeparator: Bool!
+    private var tableViewTag: Int!
     
     private var tvPopUp: UITableView!
     private var tvSize: CGSize!
@@ -84,7 +85,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
         self.addCellSeparator = addCellSeparator ?? true
         self.tvSize = CGSize(width: tvMaxWidth, height: tvMaxHeight)
         self.tvPopUp = UITableView(frame: CGRect(x: 0, y: 0, width: 0, height: 0), style: .grouped)
-        self.tvPopUp.tag = tag ?? 0
+        self.tableViewTag = tag ?? 0
         super.init(nibName: nil, bundle: nil)
     }
     
@@ -393,7 +394,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if let delegate = self.delegate{
-            return delegate.tableViewPopup(tableView, cellForRowAt: indexPath)
+            return delegate.tableViewPopup(tableView, cellForRowAt: indexPath, tag: self.tableViewTag)
         } else {
             return UITableViewCell()
         }
@@ -409,7 +410,7 @@ class DropDownView: UIViewController, UITableViewDelegate, UITableViewDataSource
     
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let delegate = self.delegate{
-            delegate.tableViewPopup(tableView, didSelectRowAt: indexPath)
+            delegate.tableViewPopup(tableView, didSelectRowAt: indexPath, tag: self.tableViewTag)
         }
         tableView.reloadData()
         if autoDismiss{

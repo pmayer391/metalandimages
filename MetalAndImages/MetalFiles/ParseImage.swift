@@ -513,11 +513,11 @@ class ParseImage{
                     let vector = PixelVector()
                     vector.startPixel = currentPixel
                     currentPixel.pixelStatus = .processed
-                    imagePixelsPhase4[y][x] = PixelColor.purple.rawValue
+                    imagePixelsPhase4[y][x] = PixelColor.red.rawValue
                     processLine(pixelImage: currentPixel, line: vector, &imagePixelsPhase4)
                     let lastPixel = vector.pixelPath.last
                     vector.endPixel = lastPixel
-                    imagePixelsPhase4[lastPixel?.yPos ?? 0][lastPixel?.xPos ?? 0] = PixelColor.blue.rawValue
+                    imagePixelsPhase4[lastPixel?.yPos ?? 0][lastPixel?.xPos ?? 0] = PixelColor.white.rawValue
                     if vector.pixelPath.count > 6{
                         vectors.append(vector)
                     }
@@ -668,7 +668,7 @@ class ParseImage{
         if nextNeighbor.count == 1{
             guard let pixelToProcess = nextNeighbor.first else {debugPrint("Something strange happened."); return }
             pixelToProcess.pixelStatus = .processed
-            imgPixels[pixelToProcess.yPos][pixelToProcess.xPos] = PixelColor.orange.rawValue
+            imgPixels[pixelToProcess.yPos][pixelToProcess.xPos] = PixelColor.knowInkYellow.rawValue
             line.pixelPath.append(pixelToProcess)
             processLine(pixelImage: pixelToProcess, line: line, &imgPixels)
         } else if nextNeighbor.count == 0{
@@ -1004,6 +1004,7 @@ enum PixelColor: UInt32{
     case grayBlue = 0x43A6C6FF
     case darkBlue = 0x000C66FF
     case darkGreen = 0x024b30FF
+    case knowInkYellow = 0xC5D428FF
 }
 
 public enum SignatureAccuracy: Double{

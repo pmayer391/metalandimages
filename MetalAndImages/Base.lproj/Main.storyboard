@@ -106,7 +106,7 @@
                                                 <subviews>
                                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="OVG-qg-N3t">
                                                         <rect key="frame" x="-1" y="2" width="140" height="46"/>
-                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.23868604909999999" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.1347145736" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="140" id="uYV-qW-Zpf"/>
                                                         </constraints>
@@ -115,7 +115,7 @@
                                                             <color key="titleColor" red="0.99999600649999998" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </state>
                                                         <connections>
-                                                            <action selector="btnSaveImg:" destination="NZy-qq-Xv4" eventType="touchUpInside" id="nAw-VK-AAw"/>
+                                                            <action selector="btnSaveImgs:" destination="NZy-qq-Xv4" eventType="touchUpInside" id="B88-iV-dlg"/>
                                                         </connections>
                                                     </button>
                                                 </subviews>
@@ -133,7 +133,7 @@
                                                 <subviews>
                                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="tPY-bz-vql">
                                                         <rect key="frame" x="-1" y="2" width="140" height="46"/>
-                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.23868604909999999" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.1347145736" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="140" id="iIa-PY-PMN"/>
                                                         </constraints>
@@ -160,7 +160,7 @@
                                                 <subviews>
                                                     <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="EDD-aU-koS">
                                                         <rect key="frame" x="-1" y="2" width="140" height="46"/>
-                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.23868604909999999" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                                        <color key="backgroundColor" red="0.071380518379999994" green="0.1347145736" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                         <constraints>
                                                             <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="140" id="ioD-eg-8g1"/>
                                                         </constraints>
@@ -169,7 +169,7 @@
                                                             <color key="titleColor" red="0.99999600649999998" green="1" blue="1" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                                                         </state>
                                                         <connections>
-                                                            <action selector="btnGetImg:" destination="NZy-qq-Xv4" eventType="touchUpInside" id="JYd-rh-Y6x"/>
+                                                            <action selector="btnGetImg:" destination="NZy-qq-Xv4" eventType="touchUpInside" id="Sj6-5Y-WSS"/>
                                                         </connections>
                                                     </button>
                                                 </subviews>
@@ -227,7 +227,7 @@
                                                         <subviews>
                                                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="xML-79-xiT">
                                                                 <rect key="frame" x="20" y="20" width="414" height="148"/>
-                                                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                                <color key="backgroundColor" red="0.070588235294117646" green="0.13333333333333333" blue="0.44705882352941173" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                             </imageView>
                                                         </subviews>
                                                         <constraints>
@@ -283,7 +283,7 @@
                                                         <subviews>
                                                             <imageView clipsSubviews="YES" userInteractionEnabled="NO" tag="1" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" translatesAutoresizingMaskIntoConstraints="NO" id="yU7-PG-W4A">
                                                                 <rect key="frame" x="20" y="20" width="414" height="178.5"/>
-                                                                <color key="backgroundColor" white="0.66666666666666663" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                                                <color key="backgroundColor" red="0.071380518379999994" green="0.1347145736" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                                             </imageView>
                                                         </subviews>
                                                         <constraints>
@@ -350,7 +350,7 @@
                             </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="wP2-QW-WaS"/>
-                        <color key="backgroundColor" red="0.071380518379999994" green="0.1347145736" blue="0.4470844269" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                        <color key="backgroundColor" red="0.0" green="0.0" blue="0.22739510725762138" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="wP2-QW-WaS" firstAttribute="bottom" secondItem="hJz-Lg-EMB" secondAttribute="bottom" constant="10" id="09n-NA-HLW"/>
                             <constraint firstItem="wP2-QW-WaS" firstAttribute="trailing" secondItem="hJz-Lg-EMB" secondAttribute="trailing" id="5qX-bY-7bK"/>
@@ -360,8 +360,8 @@
                     </view>
                     <connections>
                         <outlet property="btnCompare" destination="tPY-bz-vql" id="vxB-sL-adh"/>
-                        <outlet property="btnGetImg" destination="EDD-aU-koS" id="xeA-dq-Cl7"/>
-                        <outlet property="btnSaveImg" destination="OVG-qg-N3t" id="KYq-rO-Nhy"/>
+                        <outlet property="btnGetImg" destination="EDD-aU-koS" id="0Ra-GI-13j"/>
+                        <outlet property="btnSaveImg" destination="OVG-qg-N3t" id="hSV-vk-afp"/>
                         <outlet property="centerView" destination="G17-SO-UnO" id="BuC-Hn-HdZ"/>
                         <outlet property="centerViewOffsetConstraint" destination="liu-v7-uz7" id="HwQ-0G-ULt"/>
                         <outlet property="imgScrollView" destination="xqO-tg-FQN" id="jrN-SI-8b4"/>

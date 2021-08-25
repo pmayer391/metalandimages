@@ -33,6 +33,8 @@ class TestSignatureVC: UIViewController {
     var currentTopDebugImg: DebugImageName?
     var currentBottomParsedImgObj: ParsedImage?
     var currentBottomDebugImg: DebugImageName?
+    var currentTopSignature: UIImage?
+    var currentBottomSignature: UIImage?
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -70,6 +72,8 @@ class TestSignatureVC: UIViewController {
         
         centerView.layer.cornerRadius = 10
         btnCompare.layer.cornerRadius = 12
+        btnSaveImg.layer.cornerRadius = 12
+        btnGetImg.layer.cornerRadius = 12
     }
     
     @objc func didPanMiddleView(_ gesture: UIPanGestureRecognizer){
@@ -81,31 +85,33 @@ class TestSignatureVC: UIViewController {
     
     @objc func didTapOnDebugImg(_ sender: UITapGestureRecognizer){
         if comparePressed{
+            self.imgScrollView.zoomScale = 1.0
+            self.secondaryImgScrollView.zoomScale = 1.0
             debugImages = []
             if sender.view?.tag == 0{
                 let debubImgTemp = currentTopParsedImgObj?.debugImageDic.map({$0.key}) ?? []
-                debugImages = debubImgTemp.sorted(by: {$0.rawValue > $1.rawValue})
+                debugImages = debubImgTemp.sorted(by: {$0.rawValue < $1.rawValue})
             } else {
                 let debubImgTemp = currentBottomParsedImgObj?.debugImageDic.map({$0.key}) ?? []
-                debugImages = debubImgTemp.sorted(by: {$0.rawValue > $1.rawValue})
+                debugImages = debubImgTemp.sorted(by: {$0.rawValue < $1.rawValue})
             }
             let sourceView = sender.view?.convert(sender.view?.bounds ?? self.view.bounds, to: self.view) ?? CGRect()
             let dropdown = DropDownView(sourceView: sourceView,
                                         customCellName: "",
                                         direction: (sender.view?.tag == 0 ? .ArrowDown : .ArrowUp),
-                                        maxWidth: 200,
-                                        maxHeight: 39 * CGFloat(debugImages.count),
-                                        xOffset: nil,
+                                        maxWidth: 300,
+                                        maxHeight: 50 * CGFloat(debugImages.count),
+                                        xOffset: -10,
                                         yOffset: nil,
                                         arrowOffset: nil,
-                                        bgColor: UIColor.DarkBlue(),
+                                        bgColor: UIColor.lightGray,
                                         cornerRadias: 12,
                                         autoDismiss: true,
                                         addShadow: true,
                                         borderWidth: nil,
                                         borderColor: nil,
                                         addCellSeparator: nil,
-                                        tag: (sender.view?.tag == 0 ? 0 : 1))
+                                        tag: sender.view?.tag)
             dropdown.delegate = self
             dropdown.modalPresentationStyle = UIModalPresentationStyle.overCurrentContext
             dropdown.modalTransitionStyle = UIModalTransitionStyle.crossDissolve
@@ -113,25 +119,6 @@ class TestSignatureVC: UIViewController {
         } else{
             showAlert(message: "There are no signatures to view yet.")
         }
-
-    }
-    
-    func parseImg(for img: UIImage?) {
-//        self.imgScrollView.zoomScale = 1.0
-//        self.originalScrollView.zoomScale = 1.0
-        
-//        if let parsableImg = img{
-//            let imgParser = ParseImage()
-//            imgParser.parseImage(inputImage: parsableImg, runInDebugMode: true)
-//            do {
-//                self.imgView.image = try signatureImageObj.map({$0.debugModeImage}).get()
-//            } catch {
-//                debugPrint("\(exception()): Unable to retrieve debug image.")
-//            }
-//        }
-        
-//        self.imgOriginal.image = self.signatureView.image
-//        self.signatureView.clearImage()
     }
     
     func showAlert(message: String){
@@ -143,16 +130,21 @@ class TestSignatureVC: UIViewController {
     
     @IBAction func btnCompare(_ sender: UIButton) {
         UIView.animate(withDuration: 0.15) {
-            if let sourceImg = self.signatureView.image, let secondaryImg =  self.secondarySignatureView.image{
+            if let sourceImg = self.signatureView.image,
+               let secondaryImg = self.secondarySignatureView.image{
+                self.lblSignHere.isHidden = true
+                self.secondaryLblSignHere.isHidden = true
                 sender.isEnabled = false
                 self.signatureView.clearImage()
                 self.loader.isHidden = false
                 self.loader.startAnimating()
                 self.signatureView.isUserInteractionEnabled = false
+                self.imgView.image = nil
                 self.secondarySignatureView.clearImage()
                 self.secondaryLoader.isHidden = false
                 self.secondaryLoader.startAnimating()
                 self.secondarySignatureView.isUserInteractionEnabled = false
+                self.secondaryImgView.image = nil
                 self.comparePressed = true
                 SignatureDriver.compareSignatures(sourceImg,
                                                   secondaryImg,
@@ -167,13 +159,19 @@ class TestSignatureVC: UIViewController {
                             self.loader.isHidden = true
                             self.loader.stopAnimating()
                             self.signatureView.isUserInteractionEnabled = true
+                            self.lblSignHere.isHidden = false
                             self.secondaryLoader.isHidden = true
                             self.secondaryLoader.stopAnimating()
                             self.secondarySignatureView.isUserInteractionEnabled = true
-                            self.comparePressed = false
+                            self.secondaryLblSignHere.isHidden = false
                             self.currentTopParsedImgObj = parsedImgs.first
+                            self.imgView.image = self.currentTopParsedImgObj?.debugImageDic[.phase3]
                             self.currentBottomParsedImgObj = parsedImgs.last
-                            self.showAlert(message: "Signatures are \(percent)% Matching")
+                            self.imgScrollView.zoomScale = 1.0
+                            self.secondaryImgScrollView.zoomScale = 1.0
+                            self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
+                            let formattedPercent = (String(format: "%.2f", percent))
+                            self.showAlert(message: "\(formattedPercent)% Match")
                         } else if let error = error{
                             self.showAlert(message: error)
                         } else {
@@ -187,58 +185,32 @@ class TestSignatureVC: UIViewController {
         }
     }
     
-    @IBAction func btnDoneSigning(_ sender: UIButton) {
-//        UIView.animate(withDuration: 0.15) {
-//            if sender.tag == 0{
-//                self.signatureView.clearImage()
-//                self.loader.isHidden = false
-//                self.loader.startAnimating()
-//            } else {
-//                self.secondarySignatureView.clearImage()
-//                self.secondaryLoader.isHidden = false
-//                self.secondaryLoader.startAnimating()
-//            }
-//            do {
-//                try self.parseImg(for: self.signatureView.image)
-//            } catch {
-//                debugPrint("\(exception()): Unable to retrieve debug image.")
-//            }
-//
-//        }
-    }
     
-    @IBAction func btnSelectDebugImage(_ sender: UIButton) {
-//        let title = sender.title(for: .normal)
-//        if title?.contains("Show") ?? false{
-////            originalImgView.isHidden = false
-//            sender.setTitle("Hide Signature", for: .normal)
-//        } else {
-////            originalImgView.isHidden = true
-//            sender.setTitle("Show Signature", for: .normal)
-//        }
-    }
-    
-    @IBAction func btnSaveImg(_ sender: UIButton) {
-//        if let pngImg = imgOriginal.image{
-//            let pngImgData = pngImg.pngData()
-//            UserDefaults.standard.setValue(pngImgData, forKey: "LatestImg")
-//            showAlert(message: "Img Saved")
-//        } else{
-//            showAlert(message: "There is no signature to save yet.")
-//        }
+    @IBAction func btnSaveImgs(_ sender: UIButton) {
+        if let topImage = currentTopSignature, let bottomImage = currentBottomSignature {
+            let topPngData = topImage.pngData()
+            UserDefaults.standard.setValue(topPngData, forKey: "TopImage")
+            let bottomPngData = bottomImage.pngData()
+            UserDefaults.standard.setValue(bottomPngData, forKey: "BottomImage")
+            showAlert(message: "Images Saved.")
+        } else{
+            showAlert(message: "There must be at least two signatures to save.")
+        }
     }
     
     
     @IBAction func btnGetImg(_ sender: UIButton) {
-//        if let imgData = UserDefaults.standard.value(forKey: "LatestImg") as? Data{
-//            parseImg(for: UIImage(data: imgData))
-//        } else {
-//            showAlert(message: "There is no img saved yet.")
-//        }
+        if let topImgData = UserDefaults.standard.value(forKey: "TopImage") as? Data,
+           let bottomImgData = UserDefaults.standard.value(forKey: "BottomImage") as? Data{
+            let topImage = UIImage(data: topImgData)
+            let bottomImage = UIImage(data: bottomImgData)
+            signatureView.image = topImage
+            secondarySignatureView.image = bottomImage
+            btnCompare(sender)
+        } else {
+            showAlert(message: "There are no saved images yet.")
+        }
     }
-    
-    
-    
 }
 
 extension TestSignatureVC: CanvasViewDelegate{
@@ -250,9 +222,11 @@ extension TestSignatureVC: CanvasViewDelegate{
         }
     }
     
-    func signatureEnded() {
-        if signatureView.image != nil && imgView.image != nil{
-
+    func signatureEnded(tag: Int) {
+        if signatureView.image != nil, tag == 0{
+            currentTopSignature = signatureView.image
+        } else if secondarySignatureView.image != nil, tag == 1{
+            currentBottomSignature = secondarySignatureView.image
         }
     }
 }
@@ -276,24 +250,24 @@ extension TestSignatureVC : DropDownDelegate{
         return debugImages.count
     }
     
-    func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func tableViewPopup(_ tableView: UITableView, cellForRowAt indexPath: IndexPath, tag: Int) -> UITableViewCell {
         let cell = UITableViewCell()
         let debugImage = debugImages[indexPath.row]
-        if debugImage == currentTopDebugImg || debugImage == currentBottomDebugImg{
+        if (debugImage == currentTopDebugImg && tag == 0) || (debugImage == currentBottomDebugImg && tag == 1){
             cell.textLabel?.textColor = .YellowLime()
         } else {
-            cell.textLabel?.textColor = .white
+            cell.textLabel?.textColor = .black
         }
-        cell.contentView.backgroundColor = .DarkBlue()
+        cell.contentView.backgroundColor = .lightGray
         cell.textLabel?.text = debugImage.rawValue.capitalized
-        cell.textLabel?.font = UIFont.systemFont(ofSize: 13)
+        cell.textLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
         cell.textLabel?.textAlignment = .left
         return cell
     }
     
-    func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+    func tableViewPopup(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath, tag: Int) {
         let debugImg = debugImages[indexPath.row]
-        if tableView.tag == 0 {
+        if tag == 0 {
             currentTopDebugImg = debugImg
             imgView.image = currentTopParsedImgObj?.debugImageDic[debugImg]
         } else{
@@ -303,7 +277,7 @@ extension TestSignatureVC : DropDownDelegate{
     }
     
     func tableViewPopup(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
-        return 39
+        return 50
     }
     
     func popupDismissed() {

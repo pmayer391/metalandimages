@@ -28,7 +28,6 @@ public class SignatureDriver {
             let silentErrors = parsedImageObjs.map({$0.map({$0.silentErrors.joined(separator: ",")}).joined(separator: "|")})
             handler(percentage, breakingErrors, silentErrors)
         }
-        
     }
     
     class func compareSignatures(_ primarySignature: UIImage,
@@ -90,10 +89,8 @@ public class SignatureDriver {
             if let primaryImage = primaryImgObj, let secondaryImage = secondaryImgObj{
                 let quadrants = primaryImage.quadrants
                 var overallPercentage: Double = 0.0
-                for (key, primaryQuadrantCount) in quadrants{
-                    let secondQuadrantCount = secondaryImage.quadrants[key] ?? 0
-                    let pCount = primaryQuadrantCount == 0 ? 1 : primaryQuadrantCount
-                    let sCount = secondQuadrantCount == 0 ? 1 : secondQuadrantCount
+                for (key, pCount) in quadrants{
+                    let sCount = secondaryImage.quadrants[key] ?? 0
                     let quadrantPercentage = computePercentage(pCount, sCount)
                     let overallQuadrantPercentage = (quadrantPercentage / Double(quadrants.count)) * 100
                     overallPercentage = overallPercentage + overallQuadrantPercentage
@@ -108,11 +105,15 @@ public class SignatureDriver {
 
 private extension SignatureDriver{
     
-    class func computePercentage(_ first: Int, _ second: Int) -> Double{
-        if first >= second{
-            return Double(second) / Double(first)
+    class func computePercentage(_ leftSide: Int,_ rightSide: Int) -> Double{
+        var left = leftSide
+        var right = rightSide
+        if left >= right{
+            left = (left == 0 ? 1 : left)
+            return Double(right) / Double(left)
         } else {
-            return Double(first) / Double(second)
+            right = (right == 0 ? 1 : right)
+            return Double(left) / Double(right)
         }
     }
 }
