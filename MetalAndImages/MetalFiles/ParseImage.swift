@@ -8,7 +8,7 @@
 import Foundation
 import UIKit
 import CoreGraphics
-import ImageIO
+import Accelerate
 
 //https://stackoverflow.com/questions/38229027/how-to-create-a-bitmap-image-from-the-byte-array-in-swift
 //https://stackoverflow.com/questions/36393436/convert-a-double-array-to-uiimage-in-swift
@@ -29,7 +29,6 @@ class ParseImage{
         else {
             return .failure(.unableToParseImage("Couldn't access CG Image Data"))
         }
-        
         var imagePixelsPhase1 = [[UInt32]](
             repeating: [UInt32](
                 repeating: 0,
@@ -91,8 +90,9 @@ class ParseImage{
                 }
             }
         } else{
-            return .failure(.invalidImageSupplied("Image is not in the correct format. Acceptable formats include RGB and MonoChrome"))
+            return .failure(.invalidImageSupplied("Image is not in the correct format. Acceptable formats include RGBA and MonoChrome"))
         }
+        let phase1Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
         
         //MARK: - PHASE 2 - Delete all neighbor pixels to the left.
         imagePixelsPhase2 = imagePixelsPhase1
@@ -119,6 +119,7 @@ class ParseImage{
                     currentPixel)
             }
         }
+        let phase2Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
         
         //MARK: - PHASE 3 - Transform image signature into vectors.
         imagePixelsPhase3 = imagePixelsPhase2
@@ -499,6 +500,7 @@ class ParseImage{
                 }
             }
         }
+        let phase3Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
 
         //MARK: - PHASE 4 - Process all vectors and mapped them to their appropriate quadrants.
         for y in 0 ..< imagePixelsPhase4.count {
@@ -536,11 +538,17 @@ class ParseImage{
             }
         }
         parsedImageObj.quadrants = quadrantDictionary
+        let phase4Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
         
         //MARK: - Debug Info
-        let interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
-        let seconds = (String(format: "%.4f", interval))
-        debugPrint("Total Seconds Taken to Parse Image: \(seconds)")
+        let secondsPhase1 = (String(format: "%.4f", phase1Interval))
+        let secondsPhase2 = (String(format: "%.4f", phase2Interval))
+        let secondsPhase3 = (String(format: "%.4f", phase3Interval))
+        let secondsPhase4 = (String(format: "%.4f", phase4Interval))
+        debugPrint("Phase1: \(secondsPhase1)")
+        debugPrint("Phase2: \(secondsPhase2)")
+        debugPrint("Phase3: \(secondsPhase3)")
+        debugPrint("Phase4: \(secondsPhase4)")
         
         if runInDebugMode{
             parsedImageObj.debugImageDic[.phase1] = generateDebugImage(pixelArray: imagePixelsPhase1, cgImage: cgImage)
