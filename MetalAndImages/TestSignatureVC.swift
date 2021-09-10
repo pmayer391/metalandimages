@@ -35,6 +35,7 @@ class TestSignatureVC: UIViewController {
     var currentBottomDebugImg: DebugImageName?
     var currentTopSignature: UIImage?
     var currentBottomSignature: UIImage?
+    var originalSignatureViewHeight: CGFloat!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -42,6 +43,7 @@ class TestSignatureVC: UIViewController {
         signatureView.drawColor = .black
         signatureView.drawWidth = 1
         signatureView.delegate = self
+        originalSignatureViewHeight = signatureView.frame.height
         secondarySignatureView.drawColor = .black
         secondarySignatureView.drawWidth = 3
         secondarySignatureView.delegate = self
@@ -78,8 +80,9 @@ class TestSignatureVC: UIViewController {
     
     @objc func didPanMiddleView(_ gesture: UIPanGestureRecognizer){
         let translation = gesture.translation(in: view)
-        if translation.y < 250 && translation.y > -250{
-            centerViewOffsetConstraint.constant = translation.y
+        if translation.y < ((originalSignatureViewHeight / 4) * 3) &&
+            translation.y > -((originalSignatureViewHeight / 4) * 3){
+            centerViewOffsetConstraint.constant =  translation.y
         }
     }
     
@@ -139,16 +142,13 @@ class TestSignatureVC: UIViewController {
                 self.loader.isHidden = false
                 self.loader.startAnimating()
                 self.signatureView.isUserInteractionEnabled = false
-                self.imgView.image = nil
                 self.secondarySignatureView.clearImage()
                 self.secondaryLoader.isHidden = false
                 self.secondaryLoader.startAnimating()
                 self.secondarySignatureView.isUserInteractionEnabled = false
-                self.secondaryImgView.image = nil
                 self.comparePressed = true
                 SignatureDriver.compareSignatures(sourceImg,
                                                   secondaryImg,
-                                                  .standard,
                                                   true) { (percentage,
                                                            error,
                                                            parsedImgObjects) in
@@ -170,8 +170,8 @@ class TestSignatureVC: UIViewController {
                             self.imgScrollView.zoomScale = 1.0
                             self.secondaryImgScrollView.zoomScale = 1.0
                             self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
-                            let formattedPercent = (String(format: "%.2f", percent))
-                            self.showAlert(message: "\(formattedPercent)% Match")
+//                            let formattedPercent = (String(format: "%2f", percent))
+                            self.showAlert(message: "\(Int(round(percent)))% Match")
                         } else if let error = error{
                             self.showAlert(message: error)
                         } else {
@@ -184,7 +184,6 @@ class TestSignatureVC: UIViewController {
             }
         }
     }
-    
     
     @IBAction func btnSaveImgs(_ sender: UIButton) {
         if let topImage = currentTopSignature, let bottomImage = currentBottomSignature {

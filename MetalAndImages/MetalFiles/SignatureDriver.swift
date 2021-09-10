@@ -14,17 +14,14 @@ public class SignatureDriver {
     
     public class func compareSignatures(_ primarySignature: UIImage,
                                   _ secondarySignature: UIImage,
-                                  _ accuracy: SignatureAccuracy = .standard,
                                   _ handler: @escaping (_ percentage: Double?,
                                                         _ breakingError: String?,
                                                         _ nonBreakingErrors: String?) -> Void) {
         compareSignatures(primarySignature,
                           secondarySignature,
-                          accuracy,
                           false) { percentage,
                                    breakingErrors,
                                    parsedImageObjs in
-            
             let silentErrors = parsedImageObjs.map({$0.map({$0.silentErrors.joined(separator: ",")}).joined(separator: "|")})
             handler(percentage, breakingErrors, silentErrors)
         }
@@ -32,14 +29,12 @@ public class SignatureDriver {
     
     class func compareSignatures(_ primarySignature: UIImage,
                            _ secondarySignature: UIImage,
-                           _ accuracy: SignatureAccuracy = .standard,
                            _ isDebugMode: Bool = false,
                            _ handler: @escaping (_ percentage: Double?,
                                                  _ breakingError: String?,
                                                  _ imageObj: [ParsedImage]?) -> Void) {
-        
-        let operationQueue = OperationQueue()
-        operationQueue.maxConcurrentOperationCount = 2
+        let parseImgQueue = OperationQueue()
+        parseImgQueue.maxConcurrentOperationCount = 2
         var primaryImgObj: ParsedImage?
         var secondaryImgObj: ParsedImage?
            
@@ -47,8 +42,7 @@ public class SignatureDriver {
             let primaryBlock = BlockOperation{
                 let imgParser = ParseImage()
                 let result = imgParser.parseImage(inputImage: primarySignature,
-                                                            runInDebugMode: isDebugMode,
-                                                            degreeOfSignatureAccuracy: accuracy)
+                                                            runInDebugMode: isDebugMode)
                 switch result {
                 case .success(let data):
                     primaryImgObj = data
@@ -56,10 +50,10 @@ public class SignatureDriver {
                     switch error {
                     case .invalidImageSupplied(let errorMessage):
                         handler(nil, "INVALID PRIMARY IMAGE SUPPLIED: \(errorMessage)", nil)
-                        operationQueue.cancelAllOperations()
+                        parseImgQueue.cancelAllOperations()
                     case .unableToParseImage(let errorMessage):
                         handler(nil,"PRIMARY IMAGE PARSING ERROR: \(errorMessage)", nil)
-                        operationQueue.cancelAllOperations()
+                        parseImgQueue.cancelAllOperations()
                     }
                 }
             }
@@ -67,8 +61,7 @@ public class SignatureDriver {
             let secondaryBlock = BlockOperation{
                 let imgParser = ParseImage()
                 let result = imgParser.parseImage(inputImage: secondarySignature,
-                                                            runInDebugMode: isDebugMode,
-                                                            degreeOfSignatureAccuracy: accuracy)
+                                                            runInDebugMode: isDebugMode)
                 switch result {
                 case .success(let data):
                     secondaryImgObj = data
@@ -76,24 +69,21 @@ public class SignatureDriver {
                     switch error {
                     case .invalidImageSupplied(let errorMessage):
                         handler(nil, "INVALID SECONDARY IMAGE SUPPLIED: \(errorMessage)", nil)
-                        operationQueue.cancelAllOperations()
+                        parseImgQueue.cancelAllOperations()
                     case .unableToParseImage(let errorMessage):
                         handler(nil,"SECONDARY IMAGE PARSING ERROR: \(errorMessage)", nil)
-                        operationQueue.cancelAllOperations()
+                        parseImgQueue.cancelAllOperations()
                     }
                 }
             }
-            
-            operationQueue.addOperations([primaryBlock, secondaryBlock], waitUntilFinished: true)
-            
+            parseImgQueue.addOperations([primaryBlock, secondaryBlock], waitUntilFinished: true)
+
             if let primaryImage = primaryImgObj, let secondaryImage = secondaryImgObj{
-                let quadrants = primaryImage.quadrants
-                var overallPercentage: Double = 0.0
-                for (key, pCount) in quadrants{
-                    let sCount = secondaryImage.quadrants[key] ?? 0
-                    let quadrantPercentage = computePercentage(pCount, sCount)
-                    let overallQuadrantPercentage = (quadrantPercentage / Double(quadrants.count)) * 100
-                    overallPercentage = overallPercentage + overallQuadrantPercentage
+                var overallPercentage = 0.0
+                if primaryImage.vectors.count >= secondaryImage.vectors.count{
+                    overallPercentage = computePercentage(numImg: secondaryImage, denImg: primaryImage) * 100
+                } else {
+                    overallPercentage = computePercentage(numImg: primaryImage, denImg: secondaryImage) * 100
                 }
                 handler(overallPercentage, nil, [primaryImage, secondaryImage])
             } else {
@@ -105,15 +95,19 @@ public class SignatureDriver {
 
 private extension SignatureDriver{
     
-    class func computePercentage(_ leftSide: Int,_ rightSide: Int) -> Double{
-        var left = leftSide
-        var right = rightSide
-        if left >= right{
-            left = (left == 0 ? 1 : left)
-            return Double(right) / Double(left)
-        } else {
-            right = (right == 0 ? 1 : right)
-            return Double(left) / Double(right)
+    class func computePercentage(numImg: ParsedImage, denImg: ParsedImage) -> Double{
+        var totalPercentage = 0.0
+        for numVector in numImg.vectors{
+            if let denVector = denImg.vectors.min(by: {abs($0.angle - numVector.angle) < abs($1.angle - numVector.angle)}){
+                var numerator = 0.0
+                if denVector.angle >= numVector.angle{
+                    numerator = 180 - (denVector.angle - numVector.angle)
+                } else {
+                    numerator = 180 - (numVector.angle - denVector.angle)
+                }
+                totalPercentage = totalPercentage + (numerator / 180)
+            }
         }
+        return totalPercentage / Double(denImg.vectors.count)
     }
 }
