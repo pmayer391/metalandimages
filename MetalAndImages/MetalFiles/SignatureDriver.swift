@@ -81,9 +81,17 @@ public class SignatureDriver {
             if let primaryImage = primaryImgObj, let secondaryImage = secondaryImgObj{
                 var overallPercentage = 0.0
                 if primaryImage.vectors.count >= secondaryImage.vectors.count{
-                    overallPercentage = computePercentage(numImg: secondaryImage, denImg: primaryImage) * 100
+                    if primaryImage.vectors.count > 0{
+                        overallPercentage = computePercentage(numImg: secondaryImage, denImg: primaryImage)
+                    } else {
+                        handler(nil, "ERROR: Unable to Parse Image. No lines were recognized for the Primary Image supplied.", nil)
+                    }
                 } else {
-                    overallPercentage = computePercentage(numImg: primaryImage, denImg: secondaryImage) * 100
+                    if secondaryImage.vectors.count > 0{
+                        overallPercentage = computePercentage(numImg: primaryImage, denImg: secondaryImage)
+                    } else {
+                        handler(nil, "ERROR: Unable to Parse Image. No lines were recognized for the Secondary Image supplied.", nil)
+                    }
                 }
                 handler(overallPercentage, nil, [primaryImage, secondaryImage])
             } else {

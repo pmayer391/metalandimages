@@ -63,21 +63,29 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         
-//        let filter = Filter(img: imgArr[indexPath.row].img ?? UIImage())
-//        let resultImage = filter.applyFilter()
-//        mainImageView.image = resultImage
-//        mainImageView.image = ParseImage.parseImage(inputImage: imgArr[indexPath.row].img ?? UIImage())
-        
-//        let rgbaImg = RGBA(image: imgArr[indexPath.row].img)
-//        mainImageView.image = rgbaImg?.toUIImage()
-        
-//        let imageParser = ParseImage()
-//        do {
-//            self.mainImageView.image = try imageParser.parseImage(inputImage: imgArr[indexPath.row].img).map({$0.debugImageDic}).get()
-//        } catch {
-//            debugPrint("\(exception()): Unable to retrieve debug image.")
-//        }
-        
+        SignatureDriver.compareSignatures(imgArr[indexPath.row].img,
+                                          imgArr[indexPath.row].img,
+                                          true) { (percentage,
+                                                   error,
+                                                   parsedImgObjects) in
+            
+            DispatchQueue.main.async {
+                if let parsedImgs = parsedImgObjects, parsedImgs.count > 0, let percent = percentage{
+                    self.showAlert(message: "\(Int(round(percent * 100)))% Match")
+                } else if let error = error{
+                    self.showAlert(message: error)
+                } else {
+                    self.showAlert(message: "Unknown Result Occurred")
+                }
+            }
+        }
+    }
+    
+    func showAlert(message: String){
+        let alert = UIAlertController(title: nil, message: message, preferredStyle: .alert)
+        let doneBtn = UIAlertAction(title: "Done", style: .cancel, handler: nil)
+        alert.addAction(doneBtn)
+        self.present(alert, animated: true, completion: nil)
     }
 }
 

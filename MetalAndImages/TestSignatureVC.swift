@@ -171,7 +171,7 @@ class TestSignatureVC: UIViewController {
                             self.secondaryImgScrollView.zoomScale = 1.0
                             self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
 //                            let formattedPercent = (String(format: "%2f", percent))
-                            self.showAlert(message: "\(Int(round(percent)))% Match")
+                            self.showAlert(message: "\(Int(round(percent * 100)))% Match")
                         } else if let error = error{
                             self.showAlert(message: error)
                         } else {
