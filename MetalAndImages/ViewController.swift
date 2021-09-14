@@ -31,7 +31,7 @@ class ViewController: UIViewController {
         imgCollectionView.register(UINib(nibName: "CustomCell", bundle: nil), forCellWithReuseIdentifier: "CustomCell")
         imgScrollView.delegate = self
         imgScrollView.minimumZoomScale = 1.0
-        imgScrollView.maximumZoomScale = 100.0
+        imgScrollView.maximumZoomScale = 1000.0
     }
     
     override func viewDidAppear(_ animated: Bool) {
@@ -71,6 +71,23 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
             
             DispatchQueue.main.async {
                 if let parsedImgs = parsedImgObjects, parsedImgs.count > 0, let percent = percentage{
+//                    sender.isEnabled = true
+//                    self.loader.isHidden = true
+//                    self.loader.stopAnimating()
+//                    self.signatureView.isUserInteractionEnabled = true
+//                    self.lblSignHere.isHidden = false
+//                    self.secondaryLoader.isHidden = true
+//                    self.secondaryLoader.stopAnimating()
+//                    self.secondarySignatureView.isUserInteractionEnabled = true
+//                    self.secondaryLblSignHere.isHidden = false
+//                    self.currentTopParsedImgObj = parsedImgs.first
+//                    self.imgView.image = self.currentTopParsedImgObj?.debugImageDic[.phase3]
+//                    self.currentBottomParsedImgObj = parsedImgs.last
+//                    self.imgScrollView.zoomScale = 1.0
+//                    self.secondaryImgScrollView.zoomScale = 1.0
+//                    self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
+//                            let formattedPercent = (String(format: "%2f", percent))
+                    self.mainImageView.image = parsedImgs.first?.debugImageDic[.phase1]
                     self.showAlert(message: "\(Int(round(percent * 100)))% Match")
                 } else if let error = error{
                     self.showAlert(message: error)
@@ -79,6 +96,22 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
                 }
             }
         }
+        
+//        let filter = Filter(img: imgArr[indexPath.row].img ?? UIImage())
+//        let resultImage = filter.applyFilter()
+//        mainImageView.image = resultImage
+//        mainImageView.image = ParseImage.parseImage(inputImage: imgArr[indexPath.row].img ?? UIImage())
+        
+//        let rgbaImg = RGBA(image: imgArr[indexPath.row].img)
+//        mainImageView.image = rgbaImg?.toUIImage()
+        
+//        let imageParser = ParseImage()
+//        do {
+//            self.mainImageView.image = try imageParser.parseImage(inputImage: imgArr[indexPath.row].img).map({$0.debugImageDic}).get()
+//        } catch {
+//            debugPrint("\(exception()): Unable to retrieve debug image.")
+//        }
+        
     }
     
     func showAlert(message: String){
@@ -87,6 +120,7 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
         alert.addAction(doneBtn)
         self.present(alert, animated: true, completion: nil)
     }
+    
 }
 
 extension ViewController : UICollectionViewDelegateFlowLayout {

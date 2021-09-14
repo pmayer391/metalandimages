@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2D21DB4626EF168800BDF3FE /* Phase1.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D21DB4526EF168800BDF3FE /* Phase1.swift */; };
+		2D21DB4826EF19C700BDF3FE /* Phase2.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D21DB4726EF19C700BDF3FE /* Phase2.swift */; };
+		2D21DB4A26EF19FD00BDF3FE /* Phase3.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D21DB4926EF19FD00BDF3FE /* Phase3.swift */; };
+		2D21DB4C26EF1A0A00BDF3FE /* Phase4.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D21DB4B26EF1A0A00BDF3FE /* Phase4.swift */; };
+		2D21DB4F26EF969B00BDF3FE /* SignatureComparisonVC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D21DB4D26EF969B00BDF3FE /* SignatureComparisonVC.swift */; };
+		2D21DB5026EF969B00BDF3FE /* SignatureComparisonVC.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2D21DB4E26EF969B00BDF3FE /* SignatureComparisonVC.xib */; };
 		2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2D91B0E6264CD7B1003141CF /* ParseImage.swift */; };
 		2DA573FC264992F60086820F /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA573FB264992F60086820F /* AppDelegate.swift */; };
 		2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2DA573FD264992F60086820F /* SceneDelegate.swift */; };
@@ -47,6 +53,12 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		2D21DB4526EF168800BDF3FE /* Phase1.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase1.swift; sourceTree = "<group>"; };
+		2D21DB4726EF19C700BDF3FE /* Phase2.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase2.swift; sourceTree = "<group>"; };
+		2D21DB4926EF19FD00BDF3FE /* Phase3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase3.swift; sourceTree = "<group>"; };
+		2D21DB4B26EF1A0A00BDF3FE /* Phase4.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Phase4.swift; sourceTree = "<group>"; };
+		2D21DB4D26EF969B00BDF3FE /* SignatureComparisonVC.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignatureComparisonVC.swift; sourceTree = "<group>"; };
+		2D21DB4E26EF969B00BDF3FE /* SignatureComparisonVC.xib */ = {isa = PBXFileReference; lastKnownFileType = file.xib; path = SignatureComparisonVC.xib; sourceTree = "<group>"; };
 		2D91B0E6264CD7B1003141CF /* ParseImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ParseImage.swift; sourceTree = "<group>"; };
 		2DA573F8264992F60086820F /* MetalAndImages.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MetalAndImages.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		2DA573FB264992F60086820F /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -100,6 +112,17 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		2D21DB4426EF166B00BDF3FE /* Phases */ = {
+			isa = PBXGroup;
+			children = (
+				2D21DB4526EF168800BDF3FE /* Phase1.swift */,
+				2D21DB4726EF19C700BDF3FE /* Phase2.swift */,
+				2D21DB4926EF19FD00BDF3FE /* Phase3.swift */,
+				2D21DB4B26EF1A0A00BDF3FE /* Phase4.swift */,
+			);
+			path = Phases;
+			sourceTree = "<group>";
+		};
 		2DA573EF264992F60086820F = {
 			isa = PBXGroup;
 			children = (
@@ -139,6 +162,8 @@
 				2DE6262C26AA6DB00096EBC1 /* TestSignatureVC.swift */,
 				2DD670A326D20A4600D78471 /* CanvasView.swift */,
 				2DE0ECFA26D2875F008AE482 /* CBImageView.swift */,
+				2D21DB4D26EF969B00BDF3FE /* SignatureComparisonVC.swift */,
+				2D21DB4E26EF969B00BDF3FE /* SignatureComparisonVC.xib */,
 			);
 			path = MetalAndImages;
 			sourceTree = "<group>";
@@ -164,6 +189,7 @@
 		2DA574352649B62F0086820F /* MetalFiles */ = {
 			isa = PBXGroup;
 			children = (
+				2D21DB4426EF166B00BDF3FE /* Phases */,
 				2D91B0E6264CD7B1003141CF /* ParseImage.swift */,
 				2DA574362649B6400086820F /* Filter.swift */,
 				2DA5743B2649C1BA0086820F /* MetalController.metal */,
@@ -188,6 +214,8 @@
 			dependencies = (
 			);
 			name = MetalAndImages;
+			packageProductDependencies = (
+			);
 			productName = MetalAndImages;
 			productReference = 2DA573F8264992F60086820F /* MetalAndImages.app */;
 			productType = "com.apple.product-type.application";
@@ -259,6 +287,8 @@
 				Base,
 			);
 			mainGroup = 2DA573EF264992F60086820F;
+			packageReferences = (
+			);
 			productRefGroup = 2DA573F9264992F60086820F /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -277,6 +307,7 @@
 			files = (
 				2DA57408264992F60086820F /* LaunchScreen.storyboard in Resources */,
 				2DA57405264992F60086820F /* Assets.xcassets in Resources */,
+				2D21DB5026EF969B00BDF3FE /* SignatureComparisonVC.xib in Resources */,
 				2DA574312649968A0086820F /* CustomCell.xib in Resources */,
 				2DA57403264992F60086820F /* Main.storyboard in Resources */,
 			);
@@ -303,15 +334,20 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2D21DB4C26EF1A0A00BDF3FE /* Phase4.swift in Sources */,
 				2DA57400264992F60086820F /* ViewController.swift in Sources */,
 				2DE6262D26AA6DB00096EBC1 /* TestSignatureVC.swift in Sources */,
+				2D21DB4A26EF19FD00BDF3FE /* Phase3.swift in Sources */,
 				2DD670A426D20A4600D78471 /* CanvasView.swift in Sources */,
+				2D21DB4F26EF969B00BDF3FE /* SignatureComparisonVC.swift in Sources */,
+				2D21DB4626EF168800BDF3FE /* Phase1.swift in Sources */,
 				2DE0ECFF26D2B925008AE482 /* Colors.swift in Sources */,
 				2DE0ECFB26D2875F008AE482 /* CBImageView.swift in Sources */,
 				2DA574372649B6400086820F /* Filter.swift in Sources */,
 				2D91B0E7264CD7B1003141CF /* ParseImage.swift in Sources */,
 				2DE0ECF926D286FE008AE482 /* DropDownView.swift in Sources */,
 				2DA573FC264992F60086820F /* AppDelegate.swift in Sources */,
+				2D21DB4826EF19C700BDF3FE /* Phase2.swift in Sources */,
 				2DA574302649968A0086820F /* CustomCell.swift in Sources */,
 				2DA573FE264992F60086820F /* SceneDelegate.swift in Sources */,
 				2DA5743C2649C1BA0086820F /* MetalController.metal in Sources */,

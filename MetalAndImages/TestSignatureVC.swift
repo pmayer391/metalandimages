@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SignatureComparison_SPM
 
 class TestSignatureVC: UIViewController {
     

@@ -350,7 +350,7 @@
                             </stackView>
                         </subviews>
                         <viewLayoutGuide key="safeArea" id="wP2-QW-WaS"/>
-                        <color key="backgroundColor" red="0.0" green="0.0" blue="0.22739510725762138" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
+                        <color key="backgroundColor" red="0.0" green="0.0" blue="0.22745098039215686" alpha="1" colorSpace="custom" customColorSpace="sRGB"/>
                         <constraints>
                             <constraint firstItem="wP2-QW-WaS" firstAttribute="bottom" secondItem="hJz-Lg-EMB" secondAttribute="bottom" constant="10" id="09n-NA-HLW"/>
                             <constraint firstItem="wP2-QW-WaS" firstAttribute="trailing" secondItem="hJz-Lg-EMB" secondAttribute="trailing" id="5qX-bY-7bK"/>
