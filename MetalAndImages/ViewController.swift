@@ -65,34 +65,33 @@ extension ViewController: UICollectionViewDataSource, UICollectionViewDelegate{
         
         SignatureDriver.compareSignatures(imgArr[indexPath.row].img,
                                           imgArr[indexPath.row].img,
-                                          true) { (percentage,
-                                                   error,
-                                                   parsedImgObjects) in
-            
+                                          true) { result,
+                                                  parsedImages in
             DispatchQueue.main.async {
-                if let parsedImgs = parsedImgObjects, parsedImgs.count > 0, let percent = percentage{
-//                    sender.isEnabled = true
-//                    self.loader.isHidden = true
-//                    self.loader.stopAnimating()
-//                    self.signatureView.isUserInteractionEnabled = true
-//                    self.lblSignHere.isHidden = false
-//                    self.secondaryLoader.isHidden = true
-//                    self.secondaryLoader.stopAnimating()
-//                    self.secondarySignatureView.isUserInteractionEnabled = true
-//                    self.secondaryLblSignHere.isHidden = false
-//                    self.currentTopParsedImgObj = parsedImgs.first
-//                    self.imgView.image = self.currentTopParsedImgObj?.debugImageDic[.phase3]
-//                    self.currentBottomParsedImgObj = parsedImgs.last
-//                    self.imgScrollView.zoomScale = 1.0
-//                    self.secondaryImgScrollView.zoomScale = 1.0
-//                    self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
-//                            let formattedPercent = (String(format: "%2f", percent))
-                    self.mainImageView.image = parsedImgs.first?.debugImageDic[.phase1]
-                    self.showAlert(message: "\(Int(round(percent * 100)))% Match")
-                } else if let error = error{
-                    self.showAlert(message: error)
-                } else {
-                    self.showAlert(message: "Unknown Result Occurred")
+                switch result{
+                case .success(let percentage):
+    //                if let parsedImgs = parsedImgObjects, parsedImgs.count > 0, let percent = percentage{
+    //                    sender.isEnabled = true
+    //                    self.loader.isHidden = true
+    //                    self.loader.stopAnimating()
+    //                    self.signatureView.isUserInteractionEnabled = true
+    //                    self.lblSignHere.isHidden = false
+    //                    self.secondaryLoader.isHidden = true
+    //                    self.secondaryLoader.stopAnimating()
+    //                    self.secondarySignatureView.isUserInteractionEnabled = true
+    //                    self.secondaryLblSignHere.isHidden = false
+    //                    self.currentTopParsedImgObj = parsedImgs.first
+    //                    self.imgView.image = self.currentTopParsedImgObj?.debugImageDic[.phase3]
+    //                    self.currentBottomParsedImgObj = parsedImgs.last
+    //                    self.imgScrollView.zoomScale = 1.0
+    //                    self.secondaryImgScrollView.zoomScale = 1.0
+    //                    self.secondaryImgView.image = self.currentBottomParsedImgObj?.debugImageDic[.phase3]
+    //                            let formattedPercent = (String(format: "%2f", percent))
+    //                    self.mainImageView.image = parsedImgs.first?.debugImageDic[.phase1]
+                        self.showAlert(message: "\(Int(round(percentage * 100)))% Match")
+    //            }
+                case .failure(let error):
+                    self.showAlert(message: error.localizedDescription)
                 }
             }
         }

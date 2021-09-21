@@ -1,23 +1,32 @@
+
 //
 //  ParseImage.swift
-//  MetalAndImages
 //
 //  Created by Paul Mayer on 5/12/21.
 //
 
-import Foundation
 import UIKit
 import CoreGraphics
 import Accelerate
 
 class ParseImage{
     
-    
+    /// Phase 1 Debug Image
     var imagePixelsPhase1: [[UInt32]]!
+    
+    /// Phase 2 Debug Image
     var imagePixelsPhase2: [[UInt32]]!
+    
+    /// Phase 3 Debug Image
     var imagePixelsPhase3: [[UInt32]]!
+    
+    /// Phase 4 Debug Image
     var imagePixelsPhase4: [[UInt32]]!
+    
+    /// Active Pixels used in phases 2-4
     var imagePixelsArray: [ImagePixel] = []
+    
+    /// Dictionary used to create the neighboring pixels for each pixel.
     var pixelImageMap: [String:ImagePixel] = [:]
     
     
@@ -65,8 +74,7 @@ class ParseImage{
         let phase3Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
                 
         //MARK: - Phase 4 - Process all vectors and mapped them to their appropriate quadrants.
-        parsedImageObj.vectors = parseImagePhase4().0
-        parsedImageObj.silentErrors = parseImagePhase4().1
+        parsedImageObj.vectors = parseImagePhase4()
         let phase4Interval: Double = Double(CFAbsoluteTimeGetCurrent() - startTiming)
         
         //MARK: - Debug Info
@@ -126,6 +134,9 @@ private extension ParseImage{
         return imageContext.makeImage().flatMap { UIImage(cgImage: $0) }
     }
 }
+
+
+
 
 
 
